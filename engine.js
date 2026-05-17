@@ -805,11 +805,12 @@ var UI = {
     } catch(e) {}
     if(!loadedDB) loadedDB = Storage.init();
     if(!loadedDB) {
-     DB = {
-      metadata: { version: "10.0", universe: "NYC Cyber-Noir RP", lastUpdated: new Date().toISOString() },
+     // Supabase ve localStorage ikisi de boş - seedDB kullan ama Supabase'e YAZMA
+     DB = CFG.seedDB ? JSON.parse(JSON.stringify(CFG.seedDB)) : {
+      metadata: { version: "10.0", universe: CFG.universe || "RP", lastUpdated: new Date().toISOString() },
       organizations: [], characters: [], vehicles: [], properties: [], equipments: [], contracts: [], cases: [], logs: []
      };
-     Storage.save(DB);
+     try { localStorage.setItem(Storage.KEY, JSON.stringify(DB)); } catch(e) {}
     } else {
      DB = loadedDB;
     }

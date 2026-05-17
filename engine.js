@@ -1469,7 +1469,7 @@ var UI = {
      const img = isClassified ? "" : (c.image || `https://ui-avatars.com/api/?name=${c.name}&background=000&color=fff`);
      
      const statusClass = isDeceased ? 'status-deceased' : 'status-active';
-     let imgFilter = isDeceased ? 'grayscale opacity-30' : 'grayscale hover:grayscale-0';
+     let imgFilter = isDeceased ? 'grayscale opacity-30' : (CFG.colorPhotos ? 'opacity-85 hover:opacity-100' : 'grayscale hover:grayscale-0');
      if (isClassified) imgFilter = 'backdrop-blur-xl bg-gray-900';
      
      const translatedStatus = dict[c.status.toLowerCase()] || c.status;

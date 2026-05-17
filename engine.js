@@ -358,7 +358,10 @@ var i18n = {
     showLoginSelection(p);
   }
   function showLoginSelection(p){
-    const info=document.getElementById('login-selected-info');const name=document.getElementById('login-selected-name');const btn=document.getElementById('login-confirm-btn');
+    // NYC ve TOKYO admin modal id'lerini destekle
+    const info=document.getElementById('login-selected-info')||document.getElementById('admin-login-selected-info');
+    const name=document.getElementById('login-selected-name')||document.getElementById('admin-login-selected-name');
+    const btn=document.getElementById('login-confirm-btn')||document.getElementById('admin-login-confirm-btn');
     if(info)info.classList.remove('hidden');
     if(name){name.textContent=p.name.toUpperCase();name.style.color=p.color;}
     if(btn){btn.removeAttribute('disabled');btn.style.borderColor=p.color;btn.style.color=p.color;}

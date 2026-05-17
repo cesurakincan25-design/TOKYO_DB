@@ -21,6 +21,7 @@ window.RPCONFIG = {
   // 'splash'        → init-screen'e tıklayınca boot animasyonu (NYC tarzı)
   // 'player-select' → direkt oyuncu seçim ekranı (TOKYO tarzı)
   bootMode:      'player-select',
+  colorPhotos:   true,   // true → renkli fotoğraf, false → grayscale (NYC tarzı)
 
   // ── Evren bilgisi ─────────────────────────────────────────
   universe:      'TOKYO RP',
@@ -29,8 +30,8 @@ window.RPCONFIG = {
   // Tokyo'nun renk paleti sakura/torii/bambu/altın/mor
   players: [
     { id: 'eren',  name: 'Eren',  role: 'admin', color: '#e8728a' },
-   // { id: 'melih', name: 'Melih', role: 'admin', color: '#d04020' },
-   // { id: 'tuna',  name: 'Tuna',  role: 'admin', color: '#2d7a4e' },
+  // { id: 'melih', name: 'Melih', role: 'admin', color: '#d04020' },
+  // { id: 'tuna',  name: 'Tuna',  role: 'admin', color: '#2d7a4e' },
     { id: 'nes',   name: 'Nes',   role: 'admin', color: '#c8a84b' },
     { id: 'aley',  name: 'Aley',  role: 'admin', color: '#7b4a8a' }
   ],

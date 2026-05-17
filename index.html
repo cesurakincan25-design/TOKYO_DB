@@ -66,31 +66,51 @@ input, textarea, select { cursor: text !important; }
 input[type=checkbox], input[type=radio] { cursor: pointer !important; }
 
 #custom-cursor { position:fixed;pointer-events:none;z-index:99999;top:0;left:0;transition:opacity .2s; }
+@keyframes cursor-spin-colors {
+  0%   { border-color: #e8728a; box-shadow: 0 0 8px #e8728a40; transform: translate(-50%,-50%) rotate(0deg); }
+  25%  { border-color: #c8a84b; box-shadow: 0 0 8px #c8a84b40; transform: translate(-50%,-50%) rotate(90deg); }
+  50%  { border-color: #7b4a8a; box-shadow: 0 0 8px #7b4a8a40; transform: translate(-50%,-50%) rotate(180deg); }
+  75%  { border-color: #2d7a4e; box-shadow: 0 0 8px #2d7a4e40; transform: translate(-50%,-50%) rotate(270deg); }
+  100% { border-color: #e8728a; box-shadow: 0 0 8px #e8728a40; transform: translate(-50%,-50%) rotate(360deg); }
+}
+@keyframes cursor-dot-pulse {
+  0%,100% { background:#e8728a; box-shadow:0 0 8px #e8728a; }
+  33%     { background:#c8a84b; box-shadow:0 0 8px #c8a84b; }
+  66%     { background:#7b4a8a; box-shadow:0 0 8px #7b4a8a; }
+}
 #cursor-outer {
-  position:absolute; width:32px; height:32px;
-  border: 1.5px solid var(--sakura); border-radius: 50%;
+  position:absolute; width:28px; height:28px;
+  border: 1.5px solid var(--sakura);
+  border-radius: 4px;
   transform: translate(-50%,-50%);
-  transition: width .2s, height .2s, border-color .2s, opacity .2s;
-  opacity: 0.7;
+  transition: width .15s, height .15s, opacity .2s;
+  opacity: 0.75;
+  animation: cursor-spin-colors 4s linear infinite;
 }
 #cursor-inner {
-  position:absolute; width:6px; height:6px;
+  position:absolute; width:5px; height:5px;
   background: var(--torii); border-radius: 50%;
   transform: translate(-50%,-50%);
-  transition: transform .08s, background .15s;
-  box-shadow: 0 0 8px var(--torii);
+  transition: transform .08s;
+  animation: cursor-dot-pulse 4s linear infinite;
 }
 #cursor-petal {
-  position:absolute; font-size: 14px;
-  transform: translate(-50%, -130%);
+  position:absolute; font-size: 13px;
+  transform: translate(-50%, -140%);
   opacity: 0; transition: opacity .3s;
-  pointer-events: none; color: var(--sakura);
+  pointer-events: none;
 }
-body.cursor-hover #cursor-outer { width:44px; height:44px; border-color: var(--torii); opacity:1; }
-body.cursor-hover #cursor-inner { transform:translate(-50%,-50%) scale(1.8); background:var(--torii); }
-body.cursor-hover #cursor-petal { opacity: 0.6; }
+body.cursor-hover #cursor-outer {
+  width:40px; height:40px; border-radius:50%;
+  border-color: var(--torii); opacity:1;
+  animation: none;
+  box-shadow: 0 0 12px var(--torii);
+  transform: translate(-50%,-50%) rotate(0deg);
+}
+body.cursor-hover #cursor-inner { transform:translate(-50%,-50%) scale(2); background:var(--torii); animation:none; }
+body.cursor-hover #cursor-petal { opacity: 0.7; }
 body.cursor-click #cursor-inner { transform:translate(-50%,-50%) scale(0.3); }
-body.cursor-click #cursor-outer { width:20px; height:20px; opacity:1; }
+body.cursor-click #cursor-outer { width:16px; height:16px; opacity:1; animation:none; }
 
 /* ── SAKURA PETALS BACKGROUND ── */
 .petal-container { position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden; }
@@ -444,6 +464,30 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 /* Admin / modals koyu bg */
 #admin-modal-inner, #profile-fullscreen .glass-panel { background:rgba(12,8,24,0.85) !important; border-color:rgba(255,255,255,0.08) !important; color:#e2e8f0; }
 #profile-fullscreen { background:#0c0818 !important; color:#e2e8f0; }
+/* Profile içindeki NYC cyber-button'ları Tokyo'ya uyarla */
+#profile-fullscreen .cyber-button {
+  border-color: rgba(200,168,75,0.5) !important;
+  color: rgba(200,168,75,0.9) !important;
+  background: rgba(200,168,75,0.05) !important;
+  clip-path: none !important;
+}
+#profile-fullscreen .cyber-button:hover {
+  background: rgba(200,168,75,0.15) !important;
+}
+/* Profile içindeki glass-panel border */
+#profile-fullscreen .glass-panel {
+  border-color: rgba(200,168,75,0.15) !important;
+  background: rgba(12,8,24,0.6) !important;
+}
+/* Profile header - NYC dark bg yerine Tokyo */
+#profile-fullscreen > div > div:first-child {
+  background: rgba(12,8,24,0.95) !important;
+  border-color: rgba(200,168,75,0.15) !important;
+}
+/* Profil img aspect-square border */
+#profile-fullscreen .aspect-square {
+  border-color: rgba(232,114,138,0.4) !important;
+}
 /* search results panel */
 #srp { background:rgba(12,8,24,0.99) !important; color:#e2e8f0; }
 /* koyu bg overrides */
@@ -497,6 +541,18 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 .glass-panel { background:#160e2a !important; border-color:rgba(200,168,75,.2) !important; }
 /* Admin modal */
 #admin-modal-inner { background:#0e0820 !important; color:#e8e2d9; }
+
+/* ── TOKYO KARAKTER KARTI - RENKLI FOTOĞRAF ── */
+.tokyo-card img, #chars-grid .cyber-card img {
+  filter: none !important;
+  opacity: 0.85 !important;
+  mix-blend-mode: normal !important;
+}
+.tokyo-card img:hover, #chars-grid .cyber-card img:hover {
+  opacity: 1 !important;
+}
+/* Karakter profil fotoğrafı da renkli */
+#profile-fullscreen img.w-full { filter: none !important; }
 /* Inputs in dark mode */
 input:not([type=radio]):not([type=checkbox]), select, textarea {
   background: rgba(15,12,8,0.6) !important;
@@ -557,9 +613,7 @@ input:focus, select:focus, textarea:focus {
     <div id="profile-fullscreen"></div>
 
 <!-- Modals -->
-<div id="char-modal" class="hidden fixed inset-0 z-[9990] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onclick="if(event.target===this)UI.closeAllModals()">
-  <div class="washi-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto relative" id="char-modal-inner"></div>
-</div>
+<!-- char-modal engine tarafından render edilir -->
 <div id="org-modal"  style="display:none" class="fixed inset-0 z-[9991] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onclick="if(event.target===this)UI.closeOrgModal()">
   <div class="washi-panel w-full max-w-5xl max-h-[90vh] overflow-y-auto relative" id="org-modal-inner"></div>
 </div>
@@ -863,7 +917,7 @@ input:focus, select:focus, textarea:focus {
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-1 mb-6 font-mono text-sm border-b border-gray-800 pb-0">
+                    <div class="flex flex-wrap gap-1 font-mono text-sm border-b border-gray-800 pb-0 sticky top-0 z-10" style="background:#0e0820;padding-bottom:0;margin-bottom:0;">
                         <button onclick="Admin.switchTab('chars')" class="admin-tab active click-sfx hover-sfx px-4 py-2 border-b-2 whitespace-nowrap border-transparent text-gray-500" data-target="admin-chars" data-i18n="nav_profiles">Profiles</button>
                         <button onclick="Admin.switchTab('orgs')" class="admin-tab click-sfx hover-sfx px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-white whitespace-nowrap" data-target="admin-orgs" data-i18n="nav_syndicates">Syndicates</button>
                         <button onclick="Admin.switchTab('vehicles')" class="admin-tab click-sfx hover-sfx px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-white whitespace-nowrap" data-target="admin-vehicles" data-i18n="nav_vehicles">Vehicles</button>
@@ -1522,7 +1576,7 @@ input:focus, select:focus, textarea:focus {
             <button onclick="UI.closeModal('char-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-cyber-red text-3xl z-30 transition-colors click-sfx hover-sfx"><i class="fas fa-times"></i></button>
             
             <div class="w-full md:w-2/5 h-64 md:h-full bg-black relative border-b md:border-b-0 md:border-r border-cyber-blue/30 group">
-                <img id="modal-img" src="" class="w-full h-full object-cover object-top opacity-70 group-hover:opacity-100 transition-all duration-700 filter grayscale group-hover:grayscale-0">
+                <img id="modal-img" src="" class="w-full h-full object-cover object-top opacity-90 group-hover:opacity-100 transition-all duration-500">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none"></div>
                 <div class="absolute bottom-6 left-6 z-10 w-full pr-12">
                     <div class="flex flex-wrap gap-2 mb-2">
@@ -1627,7 +1681,7 @@ input:focus, select:focus, textarea:focus {
         <div class="glass-panel border border-cyber-purple w-full max-w-5xl h-auto relative shadow-[0_0_80px_rgba(176,38,255,0.15)] overflow-hidden flex flex-col md:flex-row">
             <button onclick="UI.closeModal('property-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-cyber-red text-3xl z-30 transition-colors click-sfx hover-sfx"><i class="fas fa-times"></i></button>
             <div class="w-full md:w-1/2 h-64 md:h-auto bg-black relative border-b md:border-b-0 md:border-r border-cyber-purple/30 group">
-                <img id="p-modal-img" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 filter grayscale group-hover:grayscale-0">
+                <img id="p-modal-img" src="" class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-500">
             </div>
             <div class="w-full md:w-1/2 p-6 md:p-10 font-mono flex flex-col justify-center bg-cyber-bg/90">
                 <div class="border-b border-gray-800 pb-4 mb-6">

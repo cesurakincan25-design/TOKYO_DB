@@ -189,7 +189,6 @@ window.NYC_PLAYERS = CFG.players || [];
             } catch(e) { return null; }
         };
     window.SupaSync = SupaSync;
-    </script>
   const SFX = {
    ctx: null,
    isMuted: localStorage.getItem(CFG.sfxKey) === 'true',
@@ -4220,7 +4219,6 @@ window.NYC_PLAYERS = CFG.players || [];
 
   
 
- </script>
 
 // Player localStorage'dan oku (sayfa yüklenince)
 (function(){

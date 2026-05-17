@@ -1725,4 +1725,66 @@ input:focus, select:focus, textarea:focus {
 
 <!-- ── Shared Engine ── -->
 <script src="engine.js"></script>
+
+<script>
+// Cursor
+(function(){
+  const cur=document.getElementById('custom-cursor');
+  if(!cur||window.innerWidth<=768||/Android|iPhone|iPad/i.test(navigator.userAgent)){if(cur)cur.style.display='none';return;}
+  document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';});
+  document.addEventListener('mouseover',e=>{if(e.target.closest('button,a,[onclick],input,textarea,select,.cursor-pointer,.tokyo-btn,.nav-link,.tokyo-card'))document.body.classList.add('cursor-hover');});
+  document.addEventListener('mouseout',e=>{if(e.target.closest('button,a,[onclick],input,textarea,select,.cursor-pointer,.tokyo-btn,.nav-link,.tokyo-card'))document.body.classList.remove('cursor-hover');});
+  document.addEventListener('mousedown',()=>document.body.classList.add('cursor-click'));
+  document.addEventListener('mouseup',()=>document.body.classList.remove('cursor-click'));
+})();
+// Sakura petals
+(function(){
+  const c=document.getElementById('petal-container');if(!c)return;
+  for(let i=0;i<22;i++){const p=document.createElement('div');p.className='petal';p.style.left=Math.random()*100+'vw';p.style.animationDuration=(8+Math.random()*14)+'s';p.style.animationDelay=(Math.random()*18)+'s';p.style.width=(5+Math.random()*6)+'px';p.style.height=(7+Math.random()*6)+'px';p.style.opacity=(0.25+Math.random()*.4).toString();p.style.transform='rotate('+Math.random()*360+'deg)';c.appendChild(p);}
+})();
+// Tokyo player grid + login
+function renderTokyoPlayerGrid(){
+  const grid=document.getElementById('tokyo-player-select-grid');if(!grid)return;
+  const players=window.NYC_PLAYERS||[];
+  grid.innerHTML=players.map(p=>`<button class="player-select-btn glass-panel p-4 border-2 border-transparent cursor-pointer flex flex-col items-center gap-2 transition-all" style="color:${p.color}" data-player-id="${p.id}" onclick="tokyoSelectPlayer('${p.id}')"><div class="w-12 h-12 rounded-full border-2 flex items-center justify-center font-display font-black text-xl" style="border-color:${p.color};background:${p.color}18">${p.name[0]}</div><span class="font-mono text-xs tracking-widest">${p.name.toUpperCase()}</span></button>`).join('');
+  if(window.currentPlayer){
+    document.querySelectorAll('#tokyo-player-select-grid .player-select-btn').forEach(b=>{if(b.dataset.playerId===window.currentPlayer.id){b.style.borderColor=window.currentPlayer.color;b.style.background=window.currentPlayer.color+'18';}});
+    tokyoShowLoginSelection(window.currentPlayer);
+  }
+}
+function tokyoSelectPlayer(id){
+  const p=(window.NYC_PLAYERS||[]).find(x=>x.id===id);if(!p)return;
+  window._tokyoSelectedPlayer=p;
+  document.querySelectorAll('#tokyo-player-select-grid .player-select-btn').forEach(b=>{b.style.borderColor=b.dataset.playerId===id?p.color:'transparent';b.style.background=b.dataset.playerId===id?p.color+'22':'';});
+  tokyoShowLoginSelection(p);
+}
+function tokyoShowLoginSelection(p){
+  const info=document.getElementById('tokyo-login-selected-info');
+  const name=document.getElementById('tokyo-login-selected-name');
+  const btn=document.getElementById('tokyo-login-confirm-btn');
+  if(info)info.classList.remove('hidden');
+  if(name){name.textContent=p.name.toUpperCase();name.style.color=p.color;}
+  if(btn){btn.removeAttribute('disabled');btn.style.borderColor=p.color;btn.style.color=p.color;}
+}
+function confirmLogin(){
+  const p=window._tokyoSelectedPlayer||window._selectedPlayer;if(!p)return;
+  window.currentPlayer=p;window.currentOperator=p.name;
+  localStorage.setItem(CFG.playerKey,JSON.stringify(p));
+  const lm=document.getElementById('login-modal');
+  const aw=document.getElementById('app-wrapper');
+  if(lm){lm.style.transition='opacity .6s';lm.style.opacity='0';setTimeout(()=>lm.style.display='none',600);}
+  if(aw)aw.style.opacity='1';
+  UI.initApp().catch(e=>console.error(e));
+}
+document.addEventListener('DOMContentLoaded',function(){
+  const saved=localStorage.getItem(CFG.playerKey);
+  if(saved){try{const p=JSON.parse(saved);window.currentOperator=p.name;window.currentPlayer=p;}catch(e){}}
+  try{renderTokyoPlayerGrid();}catch(e){}
+  if(window.currentPlayer){
+    document.getElementById('login-modal').style.display='none';
+    document.getElementById('app-wrapper').style.opacity='1';
+    UI.initApp().catch(e=>console.error(e));
+  }
+});
+</script>
 </body></html>

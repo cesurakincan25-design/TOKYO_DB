@@ -108,7 +108,7 @@ body.cursor-hover #cursor-outer {
   transform: translate(-50%,-50%) rotate(0deg);
 }
 body.cursor-hover #cursor-inner { transform:translate(-50%,-50%) scale(2); background:var(--torii); animation:none; }
-body.cursor-hover #cursor-petal { opacity: 0.7; }
+body.cursor-hover #cursor-petal { opacity: 0; }
 body.cursor-click #cursor-inner { transform:translate(-50%,-50%) scale(0.3); }
 body.cursor-click #cursor-outer { width:16px; height:16px; opacity:1; animation:none; }
 
@@ -673,9 +673,11 @@ input:focus, select:focus, textarea:focus {
         <span id="player-indicator" class="font-mono text-[10px]" style="color:rgba(255,255,255,.4)">GİRİŞ</span>
       </div>
     </div>
-    <!-- Nav -->
-    <nav class="flex-1 overflow-y-auto py-2" style="scrollbar-width:none">
-      <div class="px-4 py-1.5 font-mono text-[9px] tracking-widest" style="color:rgba(255,255,255,.2)">MODÜLLER</div>
+    <!-- Nav + Filters: birlikte scrollable, MODÜLLER başlığı sticky -->
+    <div class="flex-1 overflow-y-auto" style="scrollbar-width:none">
+      <!-- MODÜLLER başlığı sticky -->
+      <div class="sticky top-0 px-4 py-1.5 font-mono text-[9px] tracking-widest z-10" style="color:rgba(255,255,255,.2);background:linear-gradient(180deg,#0c0818 80%,transparent)">MODÜLLER</div>
+      <nav class="py-1">
       <a class="nav-link" onclick="UI.switchTab('dashboard')"><i class="fas fa-users w-4 text-center"></i>Profiller</a>
       <a class="nav-link" onclick="UI.switchTab('organizations')"><i class="fas fa-sitemap w-4 text-center"></i>Gruplar</a>
       <a class="nav-link" onclick="UI.switchTab('radar')"><i class="fas fa-map-marked-alt w-4 text-center"></i>Harita</a>
@@ -686,9 +688,9 @@ input:focus, select:focus, textarea:focus {
       <a class="nav-link" onclick="UI.switchTab('equipments')"><i class="fas fa-microchip w-4 text-center"></i>Ekipman</a>
       <div class="torii-divider mx-4"></div>
       <a class="nav-link" onclick="UI.promptAdmin()"><i class="fas fa-terminal w-4 text-center"></i>Admin Panel</a>
-    </nav>
-    <!-- Sidebar Footer -->
-    <div class="p-3 border-t" style="border-color:rgba(200,168,75,.15)">
+      </nav>
+      <!-- Filters (sidebar footer içeriği buraya taşındı) -->
+      <div class="p-3 border-t mt-2" style="border-color:rgba(200,168,75,.15)">
       <!-- Filters -->
       <div id="org-filters" class="space-y-1 text-xs mb-3 border-b pb-2" style="border-color:rgba(255,255,255,.05)">
         <div class="font-mono text-[9px] tracking-widest mb-1" style="color:rgba(255,255,255,.25)">ORGANİZASYON</div>
@@ -764,7 +766,7 @@ input:focus, select:focus, textarea:focus {
         <button id="th-forest" class="theme-btn" style="background:#2d7a4e" onclick="UI.applyTheme('forest')" title="Orman"></button>
         <button id="th-torii"  class="theme-btn" style="background:#d04020" onclick="UI.applyTheme('torii')" title="Torii"></button>
       </div>
-    </div>
+      </div>  <!-- /scroll container -->
   </aside>
 
   <!-- Main Content -->
@@ -1778,6 +1780,105 @@ input:focus, select:focus, textarea:focus {
 
 <!-- ── Shared Engine ── -->
 <script src="engine.js"></script>
+<script>
+// ── TOKYO SFX OVERRIDE ──
+// Engine yüklendikten sonra SFX'i Tokyo'ya özel seslerle değiştir
+document.addEventListener('DOMContentLoaded', function() {
+  if (!window.SFX) return;
+
+  // Shamisen/koto tarzı: kısa, yumuşak, pentatonik
+  // Pentatonik notalar: 294 (D4), 330 (E4), 392 (G4), 440 (A4), 523 (C5), 587 (D5)
+  const PENTA = [294, 330, 392, 440, 523, 587, 659, 784];
+
+  // Koto teli gibi: hızlı attack, uzun decay, sine dalgası
+  SFX._kotoPluck = function(freq, vol) {
+    if (this.isMuted || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    // Hafif detune - gerçek enstrüman titremesi
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.998, t + 0.3);
+    gain.gain.setValueAtTime(vol || 0.025, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 2.01, t); // hafif overtone
+    gain2.gain.setValueAtTime((vol || 0.025) * 0.15, t);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc2.connect(gain2); gain2.connect(this.ctx.destination);
+    osc.start(t); osc.stop(t + 0.55);
+    osc2.start(t); osc2.stop(t + 0.3);
+  };
+
+  // hover: hafif koto dokunuşu - yüksek, kısa
+  SFX.hover = function() {
+    const freq = PENTA[Math.floor(Math.random() * 3) + 4]; // üst oktav
+    this._kotoPluck(freq, 0.012);
+  };
+
+  // click: orta koto vuruşu
+  SFX.click = function() {
+    const freq = PENTA[Math.floor(Math.random() * 4) + 2];
+    this._kotoPluck(freq, 0.022);
+  };
+
+  // decrypt: pentatonik arpej - koto glissando gibi
+  SFX.decrypt = function() {
+    if (this.isMuted || !this.ctx) return;
+    const notes = [392, 440, 523, 587, 659, 784];
+    notes.forEach((f, i) => {
+      setTimeout(() => this._kotoPluck(f, 0.018), i * 60);
+    });
+  };
+
+  // warning: taiko davulu gibi derin vuruş
+  SFX.warning = function() {
+    if (this.isMuted || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    // Derin taiko: düşük frekanslı sin + pitch drop
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.4);
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(t); osc.stop(t + 1.3);
+    // Üzerine metalik overtone (kane çanı gibi)
+    setTimeout(() => {
+      if (this.isMuted || !this.ctx) return;
+      const t2 = this.ctx.currentTime;
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(523, t2);
+      gain2.gain.setValueAtTime(0.025, t2);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 1.8);
+      osc2.connect(gain2); gain2.connect(this.ctx.destination);
+      osc2.start(t2); osc2.stop(t2 + 2);
+    }, 80);
+  };
+
+  // updateUI - sakura rengiyle
+  SFX.updateUI = function() {
+    const btn = document.getElementById('sfx-toggle-btn');
+    if(btn) {
+      btn.innerHTML = this.isMuted
+        ? '<i class="fas fa-volume-mute" style="color:rgba(255,255,255,0.3)"></i>'
+        : '<i class="fas fa-volume-up" style="color:var(--sakura,#e8728a)"></i>';
+    }
+  };
+});
+</script>
+
 
 <script>
 // Cursor

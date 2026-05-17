@@ -1686,22 +1686,21 @@ input:focus, select:focus, textarea:focus {
 
 
 <div id="admin-login-modal" class="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 backdrop-blur-md hidden">
-        <div class="glass-panel p-8 border border-cyber-blue max-w-md w-full text-center relative overflow-hidden">
-            <div class="absolute inset-0 bg-cyber-blue/3 pointer-events-none"></div>
-            <div class="font-display text-3xl text-cyber-red tracking-widest glitch mb-1" data-text="N.Y.C.">N.Y.C.</div>
-            <p class="font-mono text-[10px] text-gray-500 mb-6 tracking-[0.3em]">OPERATOR IDENTIFICATION — NYC_DB / NYC_RP</p>
+        <div class="washi-panel p-8 max-w-md w-full text-center relative overflow-hidden" style="background:rgba(12,8,24,0.97);border:1px solid rgba(232,114,138,0.3)">
+            <div class="font-display text-3xl tracking-widest mb-1" style="color:var(--sakura,#e8728a)">東京</div>
+            <p class="font-mono text-[10px] mb-6 tracking-[0.3em]" style="color:rgba(255,255,255,0.3)">OPERATOR IDENTIFICATION — TOKYO_DB</p>
             <div id="player-select-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
             </div>
-            <div id="admin-login-selected-info" class="hidden mb-4 p-3 border border-cyber-blue/30 font-mono text-xs">
-                <span class="text-gray-500">SEÇİLEN:</span>
-                <span id="admin-login-selected-name" class="text-cyber-blue ml-2 font-bold tracking-widest"></span>
+            <div id="admin-login-selected-info" class="hidden mb-4 p-3 font-mono text-xs" style="border:1px solid rgba(232,114,138,0.3)">
+                <span style="color:rgba(255,255,255,0.4)">SEÇİLEN:</span>
+                <span id="admin-login-selected-name" class="ml-2 font-bold tracking-widest" style="color:var(--sakura,#e8728a)"></span>
             </div>
             <div class="mb-4 hidden" id="admin-username-wrap">
-              <input type="text" id="admin-username" placeholder="Operatör adı (isteğe bağlı)" class="w-full bg-transparent border border-cyber-blue/30 font-mono text-xs text-white px-3 py-2 focus:outline-none focus:border-cyber-blue">
+              <input type="text" id="admin-username" placeholder="Operatör adı (isteğe bağlı)" class="w-full bg-transparent font-mono text-xs text-white px-3 py-2 focus:outline-none" style="border:1px solid rgba(232,114,138,0.3)">
             </div>
             <div class="flex gap-3">
-                <button onclick="document.getElementById('admin-login-modal').classList.add('hidden')" class="cyber-button w-1/2 py-3 text-xs click-sfx hover-sfx">İPTAL</button>
-                <button id="admin-login-confirm-btn" onclick="Admin.login()" class="cyber-button w-1/2 py-3 text-xs click-sfx hover-sfx" style="border-color:var(--neon-blue);color:var(--neon-blue)" disabled>GİRİŞ YAP</button>
+                <button onclick="document.getElementById('admin-login-modal').classList.add('hidden')" class="tokyo-btn w-1/2 py-3 text-xs">İPTAL</button>
+                <button id="admin-login-confirm-btn" onclick="Admin.login()" class="tokyo-btn w-1/2 py-3 text-xs" style="border-color:rgba(232,114,138,0.5);color:rgba(255,255,255,0.3)" disabled>GİRİŞ YAP</button>
             </div>
         </div>
     </div>

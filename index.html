@@ -855,10 +855,10 @@ input:focus, select:focus, textarea:focus {
             <input type="checkbox" id="map-show-events" checked onchange="UI.renderRadar()" class="cyber-checkbox">OLAYLAR
           </label>
         </div>
-        <div id="radar-map-container" class="flex-1 relative">
-          <div id="leaflet-map" style="height:100%;width:100%"></div>
+        <div id="radar-map-container" class="flex-1 relative radar-bg" style="background-image:url('https://i.imgur.com/2YORqen.jpeg');background-size:cover;background-position:center;cursor:crosshair" onclick="UI.handleMapClick(event)">
+          <div class="absolute inset-0" style="background:rgba(12,8,24,0.35);pointer-events:none"></div>
           <!-- Pin overlay for renderRadar() map pins -->
-          <div id="radar-pins" class="absolute inset-0 pointer-events-none" style="z-index:500"></div>
+          <div id="radar-pins" class="absolute inset-0" style="z-index:500"></div>
           <!-- Coordinate copy overlay (legacy compat) -->
           <div id="radar-MAP-DISABLED" class="absolute inset-0" style="z-index:450;pointer-events:none"></div>
         </div>

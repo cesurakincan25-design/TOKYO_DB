@@ -21,8 +21,7 @@
 
 // Config guard
 if (!window.RPCONFIG) {
-  console.error('[engine] window.RPCONFIG bulunamadı! config.js yüklendi mi?');
-  return;
+  throw new Error('[engine] window.RPCONFIG bulunamadı! config.js yüklendi mi?');
 }
 var CFG = window.RPCONFIG;
 

@@ -18,15 +18,13 @@
  *   RPCONFIG.universe      — evren adı string
  */
 
-(function() {
-'use strict';
 
 // Config guard
 if (!window.RPCONFIG) {
   console.error('[engine] window.RPCONFIG bulunamadı! config.js yüklendi mi?');
   return;
 }
-const CFG = window.RPCONFIG;
+var CFG = window.RPCONFIG;
 
 // Supabase credentials (config'den al)
 const SUPA_URL = CFG.supaUrl;
@@ -42,8 +40,20 @@ const SUPA_HEADERS = {
 // Oyuncu listesi - NYC_PLAYERS yerine config'den oku
 window.NYC_PLAYERS = CFG.players || [];
 
+// Global değişkenler
+var DB = {};
+var activeFilters = {
+  org: new Set(['all']),
+  threat: new Set(['all']),
+  heat: new Set(['all']),
+  player: 'all',
+  search: ''
+};
+var currentLang = 'tr';
+var currentOpenedChar = null;
 
-    const SupaSync = {
+
+var SupaSync = {
         _saving: false,
         _pendingSave: false,
         _lastRemoteHash: null,
@@ -189,7 +199,7 @@ window.NYC_PLAYERS = CFG.players || [];
             } catch(e) { return null; }
         };
     window.SupaSync = SupaSync;
-  const SFX = {
+var SFX = {
    ctx: null,
    isMuted: localStorage.getItem(CFG.sfxKey) === 'true',
    init() {
@@ -261,7 +271,7 @@ window.NYC_PLAYERS = CFG.players || [];
    }
   };
 
-  const i18n = {
+var i18n = {
    en: {
     title: "Surveillance Net", nav_profiles: "Profiles", nav_syndicates: "Syndicates", nav_vehicles: "Vehicles", nav_properties: "Assets & Fronts", nav_admin: "System Admin",
     nav_contracts: "Contracts", nav_cases: "Case Files", nav_logs: "Live Logs", nav_radar: "Radar / Map",
@@ -361,7 +371,7 @@ window.NYC_PLAYERS = CFG.players || [];
     else{el.textContent='GİRİŞ';el.style.color='#6b7280';el.style.borderColor='#374151';}
   }
   window.currentOperator = 'SYSTEM';
-  const Storage = {
+var Storage = {
    KEY: CFG.storageKey,
    KEY_LEGACY: CFG.storageLegacy,
 
@@ -644,7 +654,7 @@ window.NYC_PLAYERS = CFG.players || [];
   }
   
 
-  const Tabs = {
+var Tabs = {
    stack: [],
    active: null,
 
@@ -708,7 +718,7 @@ window.NYC_PLAYERS = CFG.players || [];
   };
   
 
-  const UI = {
+var UI = {
    async bootSequence() {
     // iOS Safari güvenli boot: tüm hatalar yakalanır, initApp her koşulda çalışır
     const self = this;
@@ -2598,7 +2608,7 @@ window.NYC_PLAYERS = CFG.players || [];
    }
   };
 
-  const Admin = {
+var Admin = {
    exportDB() { Storage.export(DB); },
    login() {
     const p = window._selectedPlayer;
@@ -4232,6 +4242,12 @@ window.NYC_PLAYERS = CFG.players || [];
   }
 })();
 
-window.currentOperator = window.currentOperator || 'SYSTEM';
 
-})(); // IIFE sonu
+// Global erişim için window'a ata
+window.UI = UI;
+window.Admin = Admin;
+window.Storage = Storage;
+window.Tabs = Tabs;
+window.SFX = SFX;
+window.SupaSync = SupaSync;
+window.DB = DB;

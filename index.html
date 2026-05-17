@@ -425,7 +425,7 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 /* ── GECE MODUNDA harita overlay ── */
 #radar-map-container {
   overflow: hidden;
-  height: 100%;
+  flex: 1;
   min-height: 0;
 }
 #radar-map-container .map-night-overlay {
@@ -822,7 +822,7 @@ input:focus, select:focus, textarea:focus {
     <div id="tab-bar"></div>
 
     <!-- Views Container -->
-    <div class="flex-1 overflow-hidden relative">
+    <div class="flex-1 overflow-hidden relative" style="position:relative;min-height:0">
       <!-- Dashboard / Characters -->
       <div id="view-dashboard" class="view-section h-full overflow-y-auto p-4 hidden">
         <div id="stat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-4">
@@ -845,7 +845,7 @@ input:focus, select:focus, textarea:focus {
         <div id="org-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
       <!-- Radar / Map -->
-      <div id="view-radar" class="view-section hidden flex flex-col" style="height:100%;min-height:0;overflow:hidden">
+      <div id="view-radar" class="view-section hidden flex flex-col" style="height:100%;overflow:hidden;position:absolute;top:0;left:0;right:0;bottom:0">
         <div class="flex items-center gap-3 px-4 py-2 border-b" style="border-color:rgba(200,168,75,.2);background:rgba(248,245,240,.5)">
           <span class="font-mono text-xs" style="color:var(--indigo)"><i class="fas fa-map-marked-alt mr-1"></i>TOKYO HARİTASI</span>
           <div class="flex-1"></div>
@@ -860,7 +860,7 @@ input:focus, select:focus, textarea:focus {
             <input type="checkbox" id="map-show-events" checked onchange="UI.renderRadar()" class="cyber-checkbox">OLAYLAR
           </label>
         </div>
-        <div id="radar-map-container" class="flex-1 relative radar-bg" style="background-image:url('https://i.imgur.com/2YORqen.jpeg');background-size:cover;background-position:center;cursor:crosshair" onclick="UI.handleMapClick(event)">
+        <div id="radar-map-container" class="relative radar-bg" style="background-image:url('https://i.imgur.com/2YORqen.jpeg');background-size:cover;background-position:center;cursor:crosshair" onclick="UI.handleMapClick(event)">
           <div class="absolute inset-0" style="background:rgba(12,8,24,0.35);pointer-events:none"></div>
           <!-- Pin overlay for renderRadar() map pins -->
           <div id="radar-pins" class="absolute inset-0" style="z-index:500"></div>

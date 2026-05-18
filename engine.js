@@ -115,7 +115,7 @@ var SupaSync = {
                 SupaSync._lastRemoteHash = null; // Polling hash'i sıfırla
                 SupaSync.updateIndicator('saved');
                 // Otomatik backup (async, kaydetmeyi bloke etmez)
-                setTimeout(() => SupaSync.takeBackup(data, operator || window.currentOperator), 500);
+                setTimeout(() => SupaSync.takeBackup(data, operator || window.currentOperator || window.currentPlayer?.name), 500);
             } catch(e) {
                 console.error('[SupaSync] Save failed:', e.message);
                 SupaSync.updateIndicator('error');
@@ -234,7 +234,7 @@ var SupaSync = {
                 method: 'POST',
                 headers: {...SUPA_HEADERS, 'Prefer': 'return=minimal'},
                 body: JSON.stringify({
-                    saved_by: operator || window.currentOperator || 'SYSTEM',
+                    saved_by: operator || window.currentOperator || window.currentPlayer?.name || 'SYSTEM',
                     char_count: charCount,
                     data: data
                 })

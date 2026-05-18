@@ -1280,12 +1280,18 @@ input:focus, select:focus, textarea:focus {
                             </div>
                  <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">External Links (comma-separated URLs)</label><input type="text" id="o-links" placeholder="https://discord.com/..."></div>
                             <div>
-                                <label class="text-cyber-blue block mb-1">İlişkili Mülkler (Property ID'leri, virgülle)</label>
-                                <input type="text" id="o-linked-props" placeholder="prop_id1, prop_id2...">
+                                <label class="text-cyber-blue block mb-1">İlişkili Mülkler</label>
+                                <div id="o-linked-props-picker" class="border border-gray-700 bg-black/60 p-2 max-h-36 overflow-y-auto space-y-1 font-mono text-xs">
+                                  <div class="text-gray-600 text-[10px]">Yükleniyor...</div>
+                                </div>
+                                <input type="hidden" id="o-linked-props">
                             </div>
                             <div>
-                                <label class="text-cyber-blue block mb-1">İlişkili Araçlar (Vehicle ID'leri, virgülle)</label>
-                                <input type="text" id="o-linked-vehs" placeholder="veh_id1, veh_id2...">
+                                <label class="text-cyber-blue block mb-1">İlişkili Araçlar</label>
+                                <div id="o-linked-vehs-picker" class="border border-gray-700 bg-black/60 p-2 max-h-36 overflow-y-auto space-y-1 font-mono text-xs">
+                                  <div class="text-gray-600 text-[10px]">Yükleniyor...</div>
+                                </div>
+                                <input type="hidden" id="o-linked-vehs">
                             </div>
                             <div class="md:col-span-2 flex justify-end gap-3 mt-4">
                                 <button type="button" id="o-btn-del" onclick="Admin.deleteData('organizations', 'o-id')" class="cyber-button danger click-sfx hover-sfx px-8 py-2 hidden">PURGE RECORD</button>

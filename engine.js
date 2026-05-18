@@ -1302,32 +1302,37 @@ var UI = {
 
     div.style.display = 'block';
     div.scrollTop = 0;
-    // Theme Song
+    // Theme Song - profile-fullscreen için
     const songEl = document.getElementById('theme-song-player');
-    if(songEl && c.themeSong) {
-      const song = c.themeSong;
+    if(songEl) {
+      if(c.themeSong) UI._renderThemeSong(songEl, c.themeSong);
+      else songEl.innerHTML = '';
+    }
+   },
+
+   _renderThemeSong(el, song) {
       let platform = '';
       let embedUrl = '';
       let thumbUrl = '';
-      let trackName = song;
 
       if(song.includes('spotify.com')) {
         platform = 'spotify';
         const spId = song.match(/track\/([A-Za-z0-9]+)/)?.[1];
         if(spId) {
-          embedUrl = `https://open.spotify.com/embed/track/${spId}?utm_source=generator&theme=0`;
-          thumbUrl = `https://open.spotify.com/embed/track/${spId}`;
+          embedUrl = 'https://open.spotify.com/embed/track/' + spId + '?utm_source=generator&theme=0';
+          thumbUrl = '';
         }
       } else if(song.includes('youtube.com') || song.includes('youtu.be')) {
         platform = 'youtube';
         const ytId = song.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
         if(ytId) {
-          embedUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
-          thumbUrl = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+          embedUrl = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1&rel=0';
+          thumbUrl = 'https://img.youtube.com/vi/' + ytId + '/mqdefault.jpg';
         }
       }
 
       if(embedUrl) {
+        el.innerHTML = '';
         var icon = platform === 'spotify' ? '#1DB954' : '#FF0000';
         var iconClass = platform === 'spotify' ? 'fab fa-spotify' : 'fab fa-youtube';
         var platformLabel = platform === 'spotify' ? 'Spotify' : 'YouTube';
@@ -1361,13 +1366,12 @@ var UI = {
             '<div style="color:#fff;font-size:12px;margin-top:3px;font-family:monospace">&#9654; Çalmak için tıkla</div>' +
           '</div>';
         wrapper.appendChild(btn);
-        songEl.innerHTML = '';
-        songEl.appendChild(wrapper);
+        el.innerHTML = '';
+        el.appendChild(wrapper);
       } else {
-        songEl.innerHTML = '';
+        el.innerHTML = '';
       }
-    } else if(songEl) { songEl.innerHTML = ''; }
-   },
+   },  // _renderThemeSong sonu
 
    printProfile(id) {
     const c = DB.characters.find(x=>x.id===id); if(!c||!window.html2pdf) return;
@@ -2439,6 +2443,16 @@ var UI = {
     if(mId) mId.innerText = (c.id || "").toUpperCase();
     const mStory = document.getElementById('modal-story');
     if(mStory) mStory.innerText = c.story || 'No historical data available.';
+
+    // Theme Song - char-modal için
+    const mSongEl = document.getElementById('modal-theme-song-player');
+    if(mSongEl) {
+      if(c.themeSong) {
+        UI._renderThemeSong(mSongEl, c.themeSong);
+      } else {
+        mSongEl.innerHTML = '';
+      }
+    }
 
     const relContainer = document.getElementById('modal-rel-container');
     if (c.relationships && c.relationships.length > 0) {

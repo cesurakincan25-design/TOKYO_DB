@@ -114,6 +114,8 @@ var SupaSync = {
                 SupaSync._lastSavedAt = saveTimestamp;
                 SupaSync._lastRemoteHash = null; // Polling hash'i sıfırla
                 SupaSync.updateIndicator('saved');
+                // Otomatik backup (async, kaydetmeyi bloke etmez)
+                setTimeout(() => SupaSync.takeBackup(data, operator || window.currentOperator), 500);
             } catch(e) {
                 console.error('[SupaSync] Save failed:', e.message);
                 SupaSync.updateIndicator('error');
@@ -184,7 +186,8 @@ var SupaSync = {
                 saved:   { color: '#00ff88', icon: 'fa-cloud',           text: 'SYNCED'    },
                 error:   { color: '#ff2a2a', icon: 'fa-exclamation-triangle', text: 'SYNC ERR' },
                 synced:  { color: '#a855f7', icon: 'fa-sync',            text: 'UPDATED'   },
-                offline: { color: '#6b7280', icon: 'fa-wifi-slash',      text: 'LOCAL'     }
+                offline: { color: '#6b7280', icon: 'fa-wifi-slash',      text: 'LOCAL'     },
+                backup:  { color: '#06b6d4', icon: 'fa-shield-alt',      text: 'AUTO BACKUP' }
             };
             const s = states[state] || states.saved;
             el.style.color = s.color;
@@ -199,6 +202,103 @@ var SupaSync = {
             } catch(e) {}
         }
     };
+    // ── OTOMATİK BACKUP SİSTEMİ ──
+    SupaSync.takeBackup = async function(data, operator) {
+        try {
+            const charCount = (data.characters || []).filter(c => !c.isArchived).length;
+            // Son backup'ı kontrol et - aynı veriyi tekrar kaydetme
+            const lastRes = await fetch(SUPA_URL + '/rest/v1/backups?order=created_at.desc&limit=1', {
+                headers: SUPA_HEADERS
+            });
+            if(lastRes.ok) {
+                const lastRows = await lastRes.json();
+                if(lastRows && lastRows[0]) {
+                    const lastCount = lastRows[0].char_count || 0;
+                    const lastData  = lastRows[0].data || {};
+                    // Karakter sayısı düştüyse MUTLAKA backup al (silme koruması)
+                    const currentCount = charCount;
+                    if(currentCount < lastCount) {
+                        console.warn('[Backup] Karakter sayısı düştü! ' + lastCount + ' → ' + currentCount + '. Yedek alınıyor...');
+                    } else if(currentCount === lastCount) {
+                        // Aynı sayıda - son 5 dakikada backup var mı?
+                        const lastTime = new Date(lastRows[0].created_at).getTime();
+                        const now = Date.now();
+                        if(now - lastTime < 5 * 60 * 1000) {
+                            return; // 5 dakika içinde backup alındı, atla
+                        }
+                    }
+                }
+            }
+            // Backup al
+            await fetch(SUPA_URL + '/rest/v1/backups', {
+                method: 'POST',
+                headers: {...SUPA_HEADERS, 'Prefer': 'return=minimal'},
+                body: JSON.stringify({
+                    saved_by: operator || window.currentOperator || 'SYSTEM',
+                    char_count: charCount,
+                    data: data
+                })
+            });
+            // Eski backupları temizle - sadece son 20'yi tut
+            const allRes = await fetch(SUPA_URL + '/rest/v1/backups?order=created_at.desc&select=id', {
+                headers: SUPA_HEADERS
+            });
+            if(allRes.ok) {
+                const allRows = await allRes.json();
+                if(allRows && allRows.length > 20) {
+                    const toDelete = allRows.slice(20).map(r => r.id);
+                    for(const did of toDelete) {
+                        await fetch(SUPA_URL + '/rest/v1/backups?id=eq.' + did, {
+                            method: 'DELETE',
+                            headers: SUPA_HEADERS
+                        });
+                    }
+                }
+            }
+            console.log('[Backup] ✓ Otomatik yedek alındı. Karakter sayısı:', charCount);
+            SupaSync.updateIndicator('backup');
+            setTimeout(() => SupaSync.updateIndicator('saved'), 3000);
+        } catch(e) {
+            console.warn('[Backup] Yedek alınamadı:', e.message);
+        }
+    };
+
+    // Backup listesini çek
+    SupaSync.listBackups = async function() {
+        try {
+            const res = await fetch(SUPA_URL + '/rest/v1/backups?order=created_at.desc&limit=20&select=id,created_at,saved_by,char_count', {
+                headers: SUPA_HEADERS
+            });
+            if(!res.ok) return [];
+            return await res.json();
+        } catch(e) { return []; }
+    };
+
+    // Belirli bir backup'ı restore et
+    SupaSync.restoreBackup = async function(backupId) {
+        try {
+            const res = await fetch(SUPA_URL + '/rest/v1/backups?id=eq.' + backupId + '&select=data,created_at,saved_by,char_count', {
+                headers: SUPA_HEADERS
+            });
+            if(!res.ok) return false;
+            const rows = await res.json();
+            if(!rows || !rows[0]) return false;
+            const backupData = rows[0].data;
+            // Önce mevcut durumu backup al
+            await SupaSync.takeBackup(DB, 'RESTORE_PRE_' + (window.currentOperator || 'SYSTEM'));
+            // Restore et
+            const parsed = Storage.migrateDB(backupData);
+            Object.assign(DB, parsed);
+            Storage.saveLocal(DB);
+            await SupaSync.save(DB, window.currentOperator);
+            try { UI.renderAll(); } catch(e) {}
+            return true;
+        } catch(e) {
+            console.error('[Backup] Restore hatası:', e.message);
+            return false;
+        }
+    };
+
     SupaSync.pushAuditLog = async function(entry) {
             try {
                 await fetch(SUPA_URL + '/rest/v1/audit_logs', {
@@ -2795,6 +2895,7 @@ var Admin = {
     if(tab === 'logs') { this.loadLogs(); this.loadEvents(); }
     try{UI.updateMobileTab(tab);}catch(e){}
     if(tab === 'audit') this.refreshAuditPanel();
+    if(tab === 'backup') this.loadBackups();
     if(tab === 'events') this.loadEvents();
    },
    loadChars() {
@@ -3885,6 +3986,51 @@ var Admin = {
      var msgs={char:'Karakter kaydedildi',org:'Organizasyon kaydedildi',veh:'Araç kaydedildi',prop:'Mülk kaydedildi',eq:'Ekipman kaydedildi',con:'Kontrat kaydedildi','case':'Dava kaydedildi',log:'Kayıt eklendi',ev:'Olay kaydedildi'};
      if(typeof showSaveToast==='function') showSaveToast(msgs[prefix]||'Kaydedildi ✓');
     }catch(e){}
+   },
+
+   async loadBackups() {
+    const list = document.getElementById('backup-list');
+    if(!list) return;
+    list.innerHTML = '<div class="font-mono text-xs text-gray-500 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</div>';
+    const backups = await SupaSync.listBackups();
+    if(!backups || backups.length === 0) {
+      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-8">Henüz yedek yok.</div>';
+      return;
+    }
+    list.innerHTML = backups.map(function(b, i) {
+      var date = new Date(b.created_at);
+      var dateStr = date.toLocaleDateString('tr-TR') + ' ' + date.toLocaleTimeString('tr-TR');
+      var isLatest = i === 0;
+      var borderClass = isLatest ? 'border-color:#15803d;background:rgba(21,128,61,0.1)' : 'border-color:#1f2937;background:rgba(0,0,0,0.4)';
+      var latestBadge = isLatest ? '<span style="color:#4ade80;font-size:9px">● EN SON</span> ' : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid;font-family:monospace;font-size:12px;margin-bottom:4px;' + borderClass + '">' +
+        '<div>' +
+          '<div style="color:white;display:flex;align-items:center;gap:8px;margin-bottom:4px">' + latestBadge + dateStr + '</div>' +
+          '<div style="color:#6b7280;font-size:10px">' +
+            '<span style="color:#60a5fa">' + (b.char_count || 0) + ' karakter</span>' +
+            ' · Kaydeden: ' + (b.saved_by || 'SYSTEM') +
+          '</div>' +
+        '</div>' +
+        '<button onclick="Admin.restoreBackup(' + b.id + ', \'' + dateStr + '\', ' + (b.char_count || 0) + ')" ' +
+          'style="border:1px solid ' + (isLatest ? '#00a2ff' : '#ff2a2a') + ';color:' + (isLatest ? '#00a2ff' : '#ff2a2a') + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer;text-transform:uppercase;letter-spacing:1px">' +
+          '↩ GERİ YÜKLE' +
+        '</button>' +
+      '</div>';
+    }).join('');
+   },
+
+   async restoreBackup(backupId, dateStr, charCount) {
+    var current = (DB.characters || []).filter(function(c){return !c.isArchived;}).length;
+    if(!confirm('"' + dateStr + '" tarihli yedeği geri yüklemek istiyor musun?\n\nYedek: ' + charCount + ' karakter\nŞu an: ' + current + ' karakter\n\nMevcut durum önce yedeklenecek.')) return;
+    const el = document.getElementById('backup-list');
+    if(el) el.innerHTML = '<div class="font-mono text-xs text-yellow-400 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Geri yükleniyor...</div>';
+    const ok = await SupaSync.restoreBackup(backupId);
+    if(ok) {
+      if(typeof showSaveToast === 'function') showSaveToast('✓ Yedek geri yüklendi!');
+      this.loadBackups();
+    } else {
+      if(el) el.innerHTML = '<div class="font-mono text-xs text-red-400 text-center py-4">Hata! Geri yükleme başarısız.</div>';
+    }
    },
 
    refreshAuditPanel(filterType, searchText) {

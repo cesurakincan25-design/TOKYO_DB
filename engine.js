@@ -78,6 +78,14 @@ var SupaSync = {
 
         // Supabase'e veri yaz (debounced)
         async save(data, operator) {
+            // Güvenlik: boş data veya sadece metadata içeren data Supabase'e yazılmasın
+            const charCount = (data && data.characters) ? data.characters.length : 0;
+            const orgCount = (data && data.organizations) ? data.organizations.length : 0;
+            const vehCount = (data && data.vehicles) ? data.vehicles.length : 0;
+            if (!data || (charCount === 0 && orgCount === 0 && vehCount === 0)) {
+                console.warn('[SupaSync] Boş data yazma engellendi');
+                return;
+            }
             if(this._saving) {
                 this._pendingSave = true;
                 return;
@@ -572,14 +580,13 @@ var Storage = {
     
 
     if (!parsed && CFG.seedDB && Object.keys(CFG.seedDB).length > 0) {
-     parsed = JSON.parse(JSON.stringify(CFG.seedDB)); 
-
+     parsed = JSON.parse(JSON.stringify(CFG.seedDB));
     }
 
     if (parsed) {
      parsed = this.migrateDB(parsed);
-     this.save(parsed); 
-
+     // Sadece localStorage'a yaz - Supabase'e dokunma (initFromSupabase zaten halletti)
+     try { localStorage.setItem(this.KEY, JSON.stringify(parsed)); } catch(e) {}
      return parsed;
     }
 

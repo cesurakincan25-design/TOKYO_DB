@@ -1328,31 +1328,41 @@ var UI = {
       }
 
       if(embedUrl) {
-        const icon = platform === 'spotify' ? '#1DB954' : '#FF0000';
-        const iconClass = platform === 'spotify' ? 'fab fa-spotify' : 'fab fa-youtube';
-        const platformLabel = platform === 'spotify' ? 'Spotify' : 'YouTube';
-        const bgStyle = platform === 'youtube' && thumbUrl
-          ? \`background-image:url('\${thumbUrl}');background-size:cover;background-position:center;\`
-          : \`background:\${platform === 'spotify' ? '#191414' : '#0f0f0f'};\`;
-
-        songEl.innerHTML = \`
-          <div class="mt-3 rounded overflow-hidden" style="border:1px solid rgba(255,255,255,0.1)">
-            <div id="song-preview-\${platform}" style="\${bgStyle}position:relative;height:72px;display:flex;align-items:center;justify-content:center;cursor:pointer;gap:12px"
-              onclick="(function(el,url){
-                el.innerHTML='<iframe src=\"'+url+'\" width=\"100%\" height=\"80\" frameborder=\"0\" allow=\"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture\" allowfullscreen style=\"border-radius:0\" loading=\"eager\"></iframe>';
-              })(this.parentElement,'\${embedUrl}')">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.55)"></div>
-              <div style="position:relative;display:flex;align-items:center;gap:10px">
-                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;border:2px solid \${icon}">
-                  <i class="\${iconClass}" style="color:\${icon};font-size:18px"></i>
-                </div>
-                <div>
-                  <div style="color:rgba(255,255,255,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase">\${platformLabel} · THEME SONG</div>
-                  <div style="color:white;font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:2px">▶ Çalmak için tıkla</div>
-                </div>
-              </div>
-            </div>
-          </div>\`;
+        var icon = platform === 'spotify' ? '#1DB954' : '#FF0000';
+        var iconClass = platform === 'spotify' ? 'fab fa-spotify' : 'fab fa-youtube';
+        var platformLabel = platform === 'spotify' ? 'Spotify' : 'YouTube';
+        var bg = (platform === 'youtube' && thumbUrl)
+          ? 'background-image:url(' + thumbUrl + ');background-size:cover;background-position:center;'
+          : 'background:' + (platform === 'spotify' ? '#191414' : '#0f0f0f') + ';';
+        // data-url ile onclick karmaşasını önle
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'margin-top:12px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)';
+        var btn = document.createElement('div');
+        btn.style.cssText = bg + 'position:relative;height:72px;display:flex;align-items:center;cursor:pointer;padding:0 16px;gap:12px';
+        btn.dataset.embedUrl = embedUrl;
+        btn.addEventListener('click', function() {
+          var iframe = document.createElement('iframe');
+          iframe.src = this.dataset.embedUrl;
+          iframe.width = '100%';
+          iframe.height = '80';
+          iframe.frameBorder = '0';
+          iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.borderRadius = '6px';
+          this.parentElement.replaceWith(iframe);
+        });
+        btn.innerHTML =
+          '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>' +
+          '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;border:2px solid ' + icon + ';flex-shrink:0;position:relative">' +
+            '<i class="' + iconClass + '" style="color:' + icon + ';font-size:18px"></i>' +
+          '</div>' +
+          '<div style="position:relative">' +
+            '<div style="color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-family:monospace">' + platformLabel + ' · THEME SONG</div>' +
+            '<div style="color:#fff;font-size:12px;margin-top:3px;font-family:monospace">&#9654; Çalmak için tıkla</div>' +
+          '</div>';
+        wrapper.appendChild(btn);
+        songEl.innerHTML = '';
+        songEl.appendChild(wrapper);
       } else {
         songEl.innerHTML = '';
       }

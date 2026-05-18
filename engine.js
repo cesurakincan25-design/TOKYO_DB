@@ -78,7 +78,7 @@ var SupaSync = {
 
         // Supabase'e veri yaz (debounced)
         async save(data, operator) {
-            // Güvenlik: boş data veya sadece metadata içeren data Supabase'e yazılmasın
+            // Güvenlik: boş data asla yazılmasın
             const charCount = (data && data.characters) ? data.characters.length : 0;
             const orgCount = (data && data.organizations) ? data.organizations.length : 0;
             const vehCount = (data && data.vehicles) ? data.vehicles.length : 0;
@@ -91,6 +91,49 @@ var SupaSync = {
                 return;
             }
             this._saving = true;
+
+            // Kaydetmeden önce: başkası bu arada yazdı mı kontrol et
+            try {
+                const remote = await this.load();
+                if (remote && remote.updatedAt) {
+                    const remoteTime = new Date(remote.updatedAt).getTime();
+                    const myLoadTime = new Date(this._lastRemoteHash || 0).getTime();
+                    const remoteOp = remote.updatedBy || 'UNKNOWN';
+                    const localOp = operator || window.currentOperator || 'SYSTEM';
+                    // Başkası bizden sonra yazmışsa - merge et, bizim değişikliklerimizi üste ekle
+                    if (remoteTime > myLoadTime + 1000 && remoteOp !== localOp) {
+                        console.warn('[SupaSync] Conflict detected - merging...');
+                        const remoteData = Storage.migrateDB(remote.data);
+                        // Karakterleri merge et: remote'dakini base al, bizimkileri üste ekle
+                        const mergedChars = [...remoteData.characters];
+                        (data.characters || []).forEach(localChar => {
+                            const idx = mergedChars.findIndex(r => r.id === localChar.id);
+                            if (idx >= 0) mergedChars[idx] = localChar; // güncelle
+                            else mergedChars.push(localChar); // yeni ekle
+                        });
+                        data = { ...remoteData, ...data, characters: mergedChars };
+                        // Diğer array'leri de merge et
+                        ['organizations','vehicles','properties','equipments','contracts','cases'].forEach(key => {
+                            const merged = [...(remoteData[key] || [])];
+                            (data[key] || []).forEach(localItem => {
+                                const idx = merged.findIndex(r => r.id === localItem.id);
+                                if (idx >= 0) merged[idx] = localItem;
+                                else merged.push(localItem);
+                            });
+                            data[key] = merged;
+                        });
+                        // Audit logları birleştir
+                        const allLogs = [...(remoteData.auditLogs || []), ...(data.auditLogs || [])];
+                        const seenIds = new Set();
+                        data.auditLogs = allLogs.filter(l => { if(seenIds.has(l.id)) return false; seenIds.add(l.id); return true; });
+                        // Merged DB'yi güncelle
+                        Object.assign(DB, data);
+                        Storage.saveLocal(DB);
+                        this._lastRemoteHash = remote.updatedAt;
+                    }
+                }
+            } catch(e) { /* conflict check sessiz fail */ }
+
             const saveTimestamp = new Date().toISOString();
             try {
                 const payload = {

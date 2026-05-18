@@ -53,6 +53,22 @@ body {
 }
 
 /* ── SCROLLBAR ── */
+
+/* ── HANAMI AÇIK TEMA ── */
+body.theme-light { color: #1a0a12 !important; }
+body.theme-light #app-sidebar { background: linear-gradient(180deg,#fce7f3,#fff0f8) !important; }
+body.theme-light .nav-link { color: rgba(26,10,18,0.6) !important; }
+body.theme-light .nav-link:hover { color: #1a0a12 !important; }
+body.theme-light #main-content { background: #fff5fb !important; }
+body.theme-light .washi-panel { background: rgba(255,240,248,0.95) !important; border-color: rgba(244,114,182,0.3) !important; }
+body.theme-light .glass-panel { background: rgba(255,240,248,0.8) !important; }
+body.theme-light input, body.theme-light textarea, body.theme-light select { background: rgba(255,240,248,0.9) !important; color: #1a0a12 !important; }
+body.theme-light .font-mono { color: #831843 !important; }
+body.theme-light #tab-bar { background: #fce7f3 !important; border-color: rgba(244,114,182,0.3) !important; }
+body.theme-light .tab-item { color: rgba(26,10,18,0.5) !important; background: rgba(255,240,248,0.6) !important; }
+body.theme-light .tab-item.active { color: #e11d48 !important; background: rgba(255,240,248,0.95) !important; }
+body.theme-light #ticker-wrap { background: #fce7f3 !important; }
+body.theme-light .petal { background: rgba(244,114,182,0.4) !important; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--mist); }
 ::-webkit-scrollbar-thumb { background: var(--sakura); border-radius: 2px; }
@@ -765,11 +781,12 @@ input:focus, select:focus, textarea:focus {
       </div>
       <!-- Theme Buttons -->
       <div class="flex gap-2 flex-wrap">
-        <button id="th-sakura" class="theme-btn active" style="background:#e8728a" onclick="UI.applyTheme('sakura')" title="Sakura"></button>
-        <button id="th-night"  class="theme-btn" style="background:#3d4a8a" onclick="UI.applyTheme('night')" title="Gece"></button>
-        <button id="th-gold"   class="theme-btn" style="background:#c8a84b" onclick="UI.applyTheme('gold')"  title="Altın"></button>
-        <button id="th-forest" class="theme-btn" style="background:#2d7a4e" onclick="UI.applyTheme('forest')" title="Orman"></button>
-        <button id="th-torii"  class="theme-btn" style="background:#d04020" onclick="UI.applyTheme('torii')" title="Torii"></button>
+        <button id="th-sakura"  class="theme-btn active" data-theme="sakura"  style="background:#e8728a" onclick="UI.applyTheme('sakura')"  title="Sakura"></button>
+        <button id="th-hanami"  class="theme-btn"        data-theme="hanami"  style="background:#f9a8c9" onclick="UI.applyTheme('hanami')"  title="Hanami (Beyaz-Pembe)"></button>
+        <button id="th-night"   class="theme-btn"        data-theme="night"   style="background:#3d4a8a" onclick="UI.applyTheme('night')"   title="Gece"></button>
+        <button id="th-gold"    class="theme-btn"        data-theme="gold"    style="background:#c8a84b" onclick="UI.applyTheme('gold')"    title="Altın"></button>
+        <button id="th-forest"  class="theme-btn"        data-theme="forest"  style="background:#2d7a4e" onclick="UI.applyTheme('forest')"  title="Orman"></button>
+        <button id="th-torii"   class="theme-btn"        data-theme="torii"   style="background:#d04020" onclick="UI.applyTheme('torii')"   title="Torii"></button>
       </div>
       </div>  <!-- /scroll container -->
   </aside>
@@ -861,7 +878,7 @@ input:focus, select:focus, textarea:focus {
           </label>
         </div>
         <div id="radar-map-container" class="relative" style="cursor:crosshair;overflow:hidden" onclick="UI.handleMapClick(event)">
-          <img src="https://i.imgur.com/2YORqen.jpeg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none;display:block">
+          <img src="https://i.imgur.com/gCkC8oX.jpeg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none;display:block">
           <div class="absolute inset-0" style="background:rgba(12,8,24,0.25);pointer-events:none"></div>
           <!-- Pin overlay for renderRadar() map pins -->
           <div id="radar-pins" class="absolute inset-0" style="z-index:500"></div>
@@ -1787,6 +1804,76 @@ input:focus, select:focus, textarea:focus {
 <!-- ── Shared Engine ── -->
 <script src="engine.js"></script>
 <script>
+// ── TOKYO TEMA SİSTEMİ ──
+const TOKYO_THEMES = {
+  sakura: {
+    '--sakura':'#e8728a', '--torii':'#d04020', '--gold':'#c8a84b',
+    '--bamboo':'#2d7a4e', '--indigo':'#3d4a8a', '--ink':'#ede8f5',
+    '--mist':'#231840',   '--paper':'#160e2a',  '--night':'#0f0f23',
+    '--bg-grid':'#0c0818',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #1a0828 0%, #0c0818 60%)',
+  },
+  hanami: {
+    '--sakura':'#f472b6', '--torii':'#e11d48', '--gold':'#fbbf24',
+    '--bamboo':'#86efac', '--indigo':'#c084fc', '--ink':'#1a0a12',
+    '--mist':'#fce7f3',   '--paper':'#fff0f8',  '--night':'#fdf2f8',
+    '--bg-grid':'#fff0f8',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #fce7f3 0%, #fff0f8 60%)',
+  },
+  night: {
+    '--sakura':'#818cf8', '--torii':'#6366f1', '--gold':'#a5b4fc',
+    '--bamboo':'#34d399', '--indigo':'#1e1b4b', '--ink':'#e0e7ff',
+    '--mist':'#1e1b4b',   '--paper':'#0f0e1a',  '--night':'#080714',
+    '--bg-grid':'#0a0916',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #1e1b4b 0%, #080714 60%)',
+  },
+  gold: {
+    '--sakura':'#fbbf24', '--torii':'#d97706', '--gold':'#f59e0b',
+    '--bamboo':'#4ade80', '--indigo':'#92400e', '--ink':'#fef3c7',
+    '--mist':'#1c1408',   '--paper':'#120e04',  '--night':'#0a0802',
+    '--bg-grid':'#110d04',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #1c1408 0%, #0a0802 60%)',
+  },
+  forest: {
+    '--sakura':'#4ade80', '--torii':'#16a34a', '--gold':'#a3e635',
+    '--bamboo':'#86efac', '--indigo':'#14532d', '--ink':'#f0fdf4',
+    '--mist':'#052e16',   '--paper':'#031a0d',  '--night':'#020f07',
+    '--bg-grid':'#041208',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #052e16 0%, #020f07 60%)',
+  },
+  torii: {
+    '--sakura':'#fb923c', '--torii':'#ea580c', '--gold':'#fbbf24',
+    '--bamboo':'#fed7aa', '--indigo':'#7c2d12', '--ink':'#fff7ed',
+    '--mist':'#1c0a00',   '--paper':'#120600',  '--night':'#0a0300',
+    '--bg-grid':'#110400',
+    body: 'background: radial-gradient(ellipse at 20% 50%, #1c0a00 0%, #0a0300 60%)',
+  },
+};
+
+// Engine'in applyTheme'ini Tokyo için override et
+const _origApplyTheme = window.UI ? null : null; // UI henüz yok, DOMContentLoaded'da override
+document.addEventListener('DOMContentLoaded', function() {
+  const origApply = UI.applyTheme.bind(UI);
+  UI.applyTheme = function(name) {
+    const t = TOKYO_THEMES[name];
+    if (t) {
+      const r = document.documentElement.style;
+      Object.entries(t).forEach(([k,v]) => { if(k.startsWith('--')) r.setProperty(k, v); });
+      // Body background
+      if (t.body) document.body.style.cssText = (document.body.style.cssText || '') + ';' + t.body;
+      // Hanami (açık tema) için özel class
+      document.body.classList.toggle('theme-light', name === 'hanami');
+      localStorage.setItem(CFG.themeKey, name);
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === name));
+    } else {
+      origApply(name); // NYC temaları için fallback
+    }
+  };
+  // Kayıtlı temayı uygula
+  const saved = localStorage.getItem(CFG.themeKey);
+  if (saved) UI.applyTheme(saved);
+});
+
 // ── TOKYO SFX OVERRIDE ──
 // Engine yüklendikten sonra SFX'i Tokyo'ya özel seslerle değiştir
 document.addEventListener('DOMContentLoaded', function() {

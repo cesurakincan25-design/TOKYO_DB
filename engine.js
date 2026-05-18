@@ -438,6 +438,10 @@ var Storage = {
      if(!c.relationships) c.relationships = [];
      if(!c.heatLevel) c.heatLevel = 'Clean';
      if(c.isClassified === undefined) c.isClassified = false;
+     if(c.isLocked    === undefined) c.isLocked    = false;
+     if(c.isArchived  === undefined) c.isArchived  = false;
+     if(c.profileType === undefined) c.profileType = 'main';
+     if(c.themeSong   === undefined) c.themeSong   = '';
      if(c.mapX === undefined) c.mapX = null;
      if(c.mapY === undefined) c.mapY = null;
      
@@ -1208,7 +1212,7 @@ var UI = {
     <div style="min-height:100vh;background:#050510">
      
      <div class="sticky top-0 z-10 flex justify-between items-center px-6 py-3 border-b border-gray-800" style="background:rgba(5,5,16,0.95);backdrop-filter:blur(10px)">
-      <button onclick="document.getElementById('profile-fullscreen').style.display='none'" style="cursor:pointer" class="cyber-button px-4 py-2 text-xs click-sfx hover-sfx"><i class="fas fa-arrow-left mr-2"></i>GERİ</button>
+      <button onclick="document.getElementById('profile-fullscreen').style.display='none';document.getElementById('theme-song-player').innerHTML=''" style="cursor:pointer" class="cyber-button px-4 py-2 text-xs click-sfx hover-sfx"><i class="fas fa-arrow-left mr-2"></i>GERİ</button>
       <h1 class="font-display font-black text-xl text-white">${c.isClassified ? '[ CLASSIFIED ]' : c.name}</h1>
       <div class="flex gap-2">
        <button onclick="UI.promptAdmin();setTimeout(()=>{Admin.switchTab('chars');Admin.editChar('${c.id}');document.getElementById('profile-fullscreen').style.display='none';},300)" style="cursor:pointer" class="cyber-button px-4 py-2 text-xs click-sfx hover-sfx"><i class="fas fa-edit mr-2"></i>DÜZENLE</button>
@@ -1260,6 +1264,7 @@ var UI = {
         <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2">BACKGROUND</div>
         <p class="font-mono text-xs text-gray-300 leading-relaxed whitespace-pre-line">${c.story}</p>
        </div>` : ''}
+       <div id="theme-song-player"></div>
 
        
        ${rels ? `<div>
@@ -1297,6 +1302,20 @@ var UI = {
 
     div.style.display = 'block';
     div.scrollTop = 0;
+    // Theme Song
+    const songEl = document.getElementById('theme-song-player');
+    if(songEl && c.themeSong) {
+      const song = c.themeSong;
+      let embedHtml = '';
+      if(song.includes('spotify.com')) {
+        const spId = song.match(/track\/([A-Za-z0-9]+)/)?.[1];
+        if(spId) embedHtml = `<iframe src="https://open.spotify.com/embed/track/${spId}?utm_source=generator&theme=0" width="100%" height="80" frameborder="0" allowtransparency="true" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="border-radius:6px"></iframe>`;
+      } else if(song.includes('youtube.com') || song.includes('youtu.be')) {
+        const ytId = song.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
+        if(ytId) embedHtml = `<iframe width="100%" height="80" src="https://www.youtube.com/embed/${ytId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius:6px"></iframe>`;
+      }
+      songEl.innerHTML = embedHtml ? `<div class="mt-4 rounded overflow-hidden">${embedHtml}</div>` : '';
+    } else if(songEl) { songEl.innerHTML = ''; }
    },
 
    printProfile(id) {
@@ -1484,8 +1503,14 @@ var UI = {
     if(!grid) return;
     let count = 0;
     let html = '';
+    let rezHtml = '';
+    let rezCount = 0;
     
     getSortedChars().forEach(c => {
+     // Arşivlenenleri ana grid'e gösterme
+     if (c.isArchived) return;
+     
+     const isRez = c.profileType === 'profile';
      const charOrgs = c.organizations || (c.organization ? [c.organization] : []);
      if (!activeFilters.org.has('all') && !charOrgs.some(oid => activeFilters.org.has(oid))) return;
      if (!activeFilters.threat.has('all') && !activeFilters.threat.has(c.threatLevel)) return;
@@ -1507,19 +1532,20 @@ var UI = {
       !sStatus.includes(activeFilters.search) &&
       !sStory.includes(activeFilters.search)) return;
 
-     count++;
      const charOrgsArr = c.organizations || (c.organization ? [c.organization] : []);
+     if (isRez) { rezCount++; } else { count++; }
      const org = this.getOrg(charOrgsArr[0] || c.organization); 
 
-     const isDeceased = c.status === 'Deceased';
+     const isDeceased   = c.status === 'Deceased';
      const isClassified = c.isClassified;
+     const isLocked     = c.isLocked && !isClassified;
      
-     const displayName = isClassified ? "[ REDACTED ]" : c.name;
-     const displayAlias = isClassified ? "[ UNKNOWN ]" : (c.alias ? `"${c.alias}"` : dict.no_alias);
-     const img = isClassified ? "" : (c.image || `https://ui-avatars.com/api/?name=${c.name}&background=000&color=fff`);
+     const displayName  = isClassified ? '[ REDACTED ]' : c.name;
+     const displayAlias = isClassified ? '[ UNKNOWN ]'  : (c.alias ? `"${c.alias}"` : dict.no_alias);
+     const img          = isClassified ? '' : (c.image || `https://ui-avatars.com/api/?name=${c.name}&background=000&color=fff`);
      
-     const statusClass = isDeceased ? 'status-deceased' : 'status-active';
-     let imgFilter = isDeceased ? 'grayscale opacity-30' : (CFG.colorPhotos ? 'opacity-85 hover:opacity-100' : 'grayscale hover:grayscale-0');
+     const statusClass  = isDeceased ? 'status-deceased' : 'status-active';
+     let imgFilter      = isDeceased ? 'grayscale opacity-30' : (CFG.colorPhotos ? 'opacity-85 hover:opacity-100' : 'grayscale hover:grayscale-0');
      if (isClassified) imgFilter = 'backdrop-blur-xl bg-gray-900';
      
      const translatedStatus = dict[c.status.toLowerCase()] || c.status;
@@ -1529,10 +1555,13 @@ var UI = {
      const heatClass = `heat-${c.heatLevel.replace(' ', '_')}`;
      const translatedHeat = dict[c.heatLevel.toLowerCase().replace(' ', '_')] || c.heatLevel;
 
-     html += `
+     const cardHtml = `
       <div class="cyber-card glass-panel flex flex-col cursor-pointer border-t-2 overflow-hidden hover-sfx click-sfx" style="border-top-color: ${isClassified ? '#1f2937' : org.color}" onclick="UI.openModal('${c.id}')">
        <div class="h-60 overflow-hidden relative bg-black">
-        ${isClassified ? `<div class="w-full h-full flex items-center justify-center ${imgFilter}"><i class="fas fa-user-secret text-6xl text-gray-700"></i></div>` : `<img src="${img}" class="w-full h-full object-cover object-top filter ${imgFilter} transition-all duration-500">`}
+        ${isClassified
+          ? `<div class="w-full h-full flex items-center justify-center ${imgFilter}"><i class="fas fa-user-secret text-6xl text-gray-700"></i></div>`
+          : `<img src="${img}" class="w-full h-full object-cover object-top filter ${imgFilter} transition-all duration-500">`}
+        ${isLocked ? `<div class="absolute inset-0 flex flex-col items-center justify-center" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(2px)"><i class="fas fa-lock text-4xl mb-2" style="color:rgba(255,255,255,0.7)"></i><span class="font-mono text-[10px] tracking-widest" style="color:rgba(255,255,255,0.5)">LOCKED</span></div>` : ''}
         <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black to-transparent flex justify-between items-end">
          <div class="flex flex-wrap gap-1">
           ${(()=>{const _pl=(window.NYC_PLAYERS||[]).find(p=>p.id===c.playerId);return _pl?`<span class="inline-block font-mono text-[9px] px-1.5 py-0.5 border" style="color:${_pl.color};border-color:${_pl.color}50">${_pl.name}</span>`:''})()}
@@ -1569,10 +1598,16 @@ var UI = {
         })()}
        </div>
       </div>`;
+     if(isRez) rezHtml += cardHtml; else html += cardHtml;
     });
     grid.innerHTML = html;
     const counter = document.getElementById('counter-chars');
     if(counter) counter.innerText = `${count} ${dict.matches}`;
+    // Rez karakterler grid
+    const rezGrid = document.getElementById('rez-character-grid');
+    if(rezGrid) rezGrid.innerHTML = rezHtml;
+    const rezCounter = document.getElementById('counter-rez-chars');
+    if(rezCounter) rezCounter.innerText = `${rezCount} Kayıt`;
    },
 
    renderOrgs() {
@@ -2796,6 +2831,10 @@ var Admin = {
     document.getElementById('c-threat').value = c.threatLevel || 'Medium';
     document.getElementById('c-heat').value = c.heatLevel || 'Clean'; 
     document.getElementById('c-classified').checked = c.isClassified || false;
+    if(document.getElementById('c-locked'))    document.getElementById('c-locked').checked    = c.isLocked    || false;
+    if(document.getElementById('c-archived'))  document.getElementById('c-archived').checked  = c.isArchived  || false;
+    if(document.getElementById('c-profile-type')) document.getElementById('c-profile-type').value = c.profileType || 'main';
+    if(document.getElementById('c-theme-song'))   document.getElementById('c-theme-song').value   = c.themeSong   || '';
     document.getElementById('c-mapx').value = c.mapX || ''; 
     document.getElementById('c-mapy').value = c.mapY || '';
     document.getElementById('c-img').value = c.image || ''; 
@@ -2924,6 +2963,10 @@ var Admin = {
      threatLevel: document.getElementById('c-threat').value, 
      heatLevel: document.getElementById('c-heat').value, 
      isClassified: document.getElementById('c-classified').checked,
+     isLocked:    document.getElementById('c-locked')?.checked || false,
+     isArchived:  document.getElementById('c-archived')?.checked || false,
+     profileType: document.getElementById('c-profile-type')?.value || 'main',
+     themeSong:   document.getElementById('c-theme-song')?.value?.trim() || '',
      mapX: document.getElementById('c-mapx').value || null, 
      mapY: document.getElementById('c-mapy').value || null,
      image: document.getElementById('c-img').value, 
@@ -3709,12 +3752,18 @@ var Admin = {
    deleteData(table, idInput) {
     const id = document.getElementById(idInput).value;
     if(!id) return;
-    if(confirm("CRITICAL: Confirm purge of this record? This action cannot be undone.")) {
-     const deletedRec = DB[table].find(x => x.id === id);
-     const deletedName = deletedRec?.name || deletedRec?.target || deletedRec?.title || deletedRec?.model || id;
-     DB[table] = DB[table].filter(x => x.id !== id);
+    if(confirm("Bu karakteri arşivlemek istediğinden emin misin? Arşivdeki karakterler gizlenir ama silinmez.")) {
+     const rec = DB[table].find(x => x.id === id);
+     const recName = rec?.name || rec?.target || rec?.title || rec?.model || id;
      const prefix = idInput.split('-')[0];
-     this.addAuditLog('delete', `Kayıt silindi [${table}]: ${deletedName}`, id);
+     if(table === 'characters' && rec) {
+       // Karakterler: sil değil arşivle
+       rec.isArchived = true;
+       this.addAuditLog('edit', `Karakter arşivlendi: ${recName}`, id);
+     } else {
+       DB[table] = DB[table].filter(x => x.id !== id);
+       this.addAuditLog('delete', `Kayıt silindi [${table}]: ${recName}`, id);
+     }
      this.finalizeSave(() => {
       if(table === 'characters') this.loadChars();
       if(table === 'organizations') this.loadOrgs();

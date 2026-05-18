@@ -655,7 +655,7 @@ var Storage = {
    export(data) {
     const a = document.createElement("a");
     a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-    a.download = `NYC_DB_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `${CFG.universe.replace(/\s+/g,'_').toUpperCase()}_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a); a.click(); a.remove();
    },
    getLang() { return localStorage.getItem(CFG.langKey) || 'tr'; },

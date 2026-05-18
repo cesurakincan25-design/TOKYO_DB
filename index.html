@@ -572,6 +572,9 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 #character-grid .cyber-card .font-mono { color:#9c9080; }
 #character-grid .tokyo-card:hover,
 #character-grid .cyber-card:hover { background:#221838 !important; box-shadow:0 8px 28px rgba(232,114,138,0.12); }
+/* Rez karakterler - biraz daha soluk */
+#rez-character-grid .cyber-card { background: #160e2a !important; border-color:rgba(200,168,75,.15) !important; color:#e8e2d9; opacity:0.9; }
+#rez-character-grid .cyber-card:hover { background:#221838 !important; opacity:1; }
 /* Stat cards */
 #stat-grid .washi-panel { background:#160e2a !important; border-color:rgba(200,168,75,.25) !important; color:#e8e2d9; }
 /* Org grid */
@@ -886,6 +889,20 @@ input:focus, select:focus, textarea:focus {
           <span class="font-mono text-[10px]" id="counter-chars" style="color:var(--gold)"></span>
         </div>
         <div id="character-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"></div>
+
+        <!-- ── REZ KARAKTERLER ── -->
+        <div class="mt-10 mb-2" id="rez-chars-section">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-px flex-1" style="background:linear-gradient(90deg,transparent,var(--sakura)40)"></div>
+            <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.3em] uppercase" style="color:var(--sakura)">
+              <i class="fas fa-archive"></i>
+              REZ KARAKTERLER
+              <span id="counter-rez-chars" style="color:var(--gold);opacity:.7"></span>
+            </div>
+            <div class="h-px flex-1" style="background:linear-gradient(90deg,var(--sakura)40,transparent)"></div>
+          </div>
+          <div id="rez-character-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 opacity-75"></div>
+        </div>
       </div>
       <!-- Organizations -->
       <div id="view-organizations" class="view-section h-full overflow-y-auto p-4 hidden">
@@ -1037,16 +1054,40 @@ input:focus, select:focus, textarea:focus {
                             </div>
                             
                             <div class="md:col-span-2">
-                                <label class="text-cyber-blue block mb-1">Security Clearance</label>
-                                <label class="flex items-center gap-2 mt-2 cursor-pointer hover-sfx">
+                                <label class="text-cyber-blue block mb-1">Karakter Türü & Güvenlik</label>
+                                <!-- Profil Tipi -->
+                                <div class="mb-3">
+                                  <label class="text-gray-400 text-[10px] uppercase tracking-widest block mb-1">Karakter Tipi</label>
+                                  <select id="c-profile-type" class="w-full bg-black/60 border border-gray-700 text-white text-xs px-2 py-1.5 font-mono">
+                                    <option value="main">Ana Karakter</option>
+                                    <option value="profile">Rez Karakter</option>
+                                  </select>
+                                </div>
+                                <!-- Classified -->
+                                <label class="flex items-center gap-2 mb-2 cursor-pointer hover-sfx">
                                     <input type="checkbox" id="c-classified" class="cyber-checkbox click-sfx">
-                                    <span class="text-cyber-red font-bold uppercase tracking-widest">Mark as CLASSIFIED (Redacted)</span>
+                                    <span class="text-red-400 font-bold uppercase tracking-widest text-[11px]">🔴 CLASSIFIED (Redacted — fotoğraf gizli)</span>
+                                </label>
+                                <!-- Locked -->
+                                <label class="flex items-center gap-2 mb-2 cursor-pointer hover-sfx">
+                                    <input type="checkbox" id="c-locked" class="cyber-checkbox click-sfx">
+                                    <span class="text-yellow-400 font-bold uppercase tracking-widest text-[11px]">🔒 LOCKED (fotoğraf görünür, kilit ikonlu)</span>
+                                </label>
+                                <!-- Archived -->
+                                <label class="flex items-center gap-2 cursor-pointer hover-sfx">
+                                    <input type="checkbox" id="c-archived" class="cyber-checkbox click-sfx">
+                                    <span class="text-gray-400 font-bold uppercase tracking-widest text-[11px]">📦 ARŞİVLENDİ (ana listeden gizle)</span>
                                 </label>
                             </div>
 
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">Image URL</label><input type="text" id="c-img" placeholder="https://..."></div>
                             <div class="md:col-span-4"><label class="text-cyber-blue block mb-1" data-i18n="ext_link">External Intel Link</label><input type="text" id="c-link" placeholder="https://discord.com/..."></div>
                             <div class="md:col-span-4"><label class="text-cyber-blue block mb-1">Intel / Background</label><textarea id="c-story" rows="5"></textarea></div>
+                            <div class="md:col-span-4">
+                              <label class="text-cyber-blue block mb-1"><i class="fas fa-music mr-1"></i>Theme Song (Spotify veya YouTube linki)</label>
+                              <input type="text" id="c-theme-song" placeholder="https://open.spotify.com/track/... veya https://youtu.be/...">
+                              <p class="text-gray-600 text-[10px] mt-1">Karakter profili açılınca otomatik çalar</p>
+                            </div>
                             
                             <div class="md:col-span-4 border-t border-gray-800 pt-4 mt-2">
                                 <label class="text-cyber-blue block mb-3 text-xs tracking-widest uppercase">İtibar / Reputation</label>

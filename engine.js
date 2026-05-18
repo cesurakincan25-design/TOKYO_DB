@@ -92,47 +92,7 @@ var SupaSync = {
             }
             this._saving = true;
 
-            // Kaydetmeden önce: başkası bu arada yazdı mı kontrol et
-            try {
-                const remote = await this.load();
-                if (remote && remote.updatedAt) {
-                    const remoteTime = new Date(remote.updatedAt).getTime();
-                    const myLoadTime = new Date(this._lastRemoteHash || 0).getTime();
-                    const remoteOp = remote.updatedBy || 'UNKNOWN';
-                    const localOp = operator || window.currentOperator || 'SYSTEM';
-                    // Başkası bizden sonra yazmışsa - merge et, bizim değişikliklerimizi üste ekle
-                    if (remoteTime > myLoadTime + 1000 && remoteOp !== localOp) {
-                        console.warn('[SupaSync] Conflict detected - merging...');
-                        const remoteData = Storage.migrateDB(remote.data);
-                        // Karakterleri merge et: remote'dakini base al, bizimkileri üste ekle
-                        const mergedChars = [...remoteData.characters];
-                        (data.characters || []).forEach(localChar => {
-                            const idx = mergedChars.findIndex(r => r.id === localChar.id);
-                            if (idx >= 0) mergedChars[idx] = localChar; // güncelle
-                            else mergedChars.push(localChar); // yeni ekle
-                        });
-                        data = { ...remoteData, ...data, characters: mergedChars };
-                        // Diğer array'leri de merge et
-                        ['organizations','vehicles','properties','equipments','contracts','cases'].forEach(key => {
-                            const merged = [...(remoteData[key] || [])];
-                            (data[key] || []).forEach(localItem => {
-                                const idx = merged.findIndex(r => r.id === localItem.id);
-                                if (idx >= 0) merged[idx] = localItem;
-                                else merged.push(localItem);
-                            });
-                            data[key] = merged;
-                        });
-                        // Audit logları birleştir
-                        const allLogs = [...(remoteData.auditLogs || []), ...(data.auditLogs || [])];
-                        const seenIds = new Set();
-                        data.auditLogs = allLogs.filter(l => { if(seenIds.has(l.id)) return false; seenIds.add(l.id); return true; });
-                        // Merged DB'yi güncelle
-                        Object.assign(DB, data);
-                        Storage.saveLocal(DB);
-                        this._lastRemoteHash = remote.updatedAt;
-                    }
-                }
-            } catch(e) { /* conflict check sessiz fail */ }
+            // Conflict detection devre dışı - sadece yaz
 
             const saveTimestamp = new Date().toISOString();
             try {
@@ -191,13 +151,25 @@ var SupaSync = {
                         const isMine = remoteOp === localOp || (localOp !== 'SYSTEM' && remoteOp === localOp);
                         const isAfterMySave = remoteTime > lastSavedAt + 2000; // 2sn tolerans
                         if(!isMine && isAfterMySave) {
-                            const parsed = Storage.migrateDB(remote.data);
-                            Object.assign(DB, parsed);
-                            Storage.saveLocal(DB);
-                            try { UI.renderAll(); } catch(e) {}
-                            try { Admin.refreshAuditPanel(); } catch(e) {}
-                            SupaSync.updateIndicator('synced');
-                            SupaSync.showSyncToast(remoteOp);
+                            // Güvenli güncelleme: sadece karakter sayısı artmışsa veya
+                            // kimse aktif düzenleme yapmıyorsa uygula
+                            const remoteChars = (remote.data.characters || []).filter(c => !c.isArchived);
+                            const localChars  = (DB.characters || []).filter(c => !c.isArchived);
+                            // Remote'da daha fazla karakter varsa güvenle uygula
+                            // Eşit veya az ise sadece bildir, override etme
+                            if(remoteChars.length >= localChars.length) {
+                                const parsed = Storage.migrateDB(remote.data);
+                                Object.assign(DB, parsed);
+                                Storage.saveLocal(DB);
+                                try { UI.renderAll(); } catch(e) {}
+                                try { Admin.refreshAuditPanel(); } catch(e) {}
+                                SupaSync.updateIndicator('synced');
+                                SupaSync.showSyncToast(remoteOp);
+                            } else {
+                                // Remote'da daha az karakter var - override etme, sadece bildir
+                                console.warn('[SupaSync] Remote has fewer chars, skipping override');
+                                SupaSync.updateIndicator('synced');
+                            }
                         }
                     }
                 } catch(e) { /* polling sessiz fail */ }

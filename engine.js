@@ -3215,13 +3215,62 @@ var Admin = {
      if(Array.isArray(o.links)) oLinks.value = o.links.map(l => l.url || l).filter(Boolean).join(', ');
      else oLinks.value = o.links || '';
     }
-    const oLinkedProps = document.getElementById('o-linked-props');
-    if(oLinkedProps) oLinkedProps.value = (o.linkedProperties || []).join(', ');
+    // linked-vehs picker
     const oLinkedVehs = document.getElementById('o-linked-vehs');
     if(oLinkedVehs) oLinkedVehs.value = (o.linkedVehicles || []).join(', ');
+    const vehPicker = document.getElementById('o-linked-vehs-picker');
+    if(vehPicker) {
+      const selectedVehs = new Set(o.linkedVehicles || []);
+      vehPicker.innerHTML = DB.vehicles.length === 0
+        ? '<div class="text-gray-600 text-[10px]">Henüz araç yok.</div>'
+        : DB.vehicles.map(v => {
+            var checked = selectedVehs.has(v.id);
+            var label = (v.plate ? v.plate + ' — ' : '') + (v.model || v.id);
+            var chk = checked ? ' checked' : '';
+            var cls = checked ? 'text-white' : 'text-gray-500';
+            return '<label class="flex items-center gap-2 cursor-pointer hover:text-white py-0.5 ' + cls + '" onclick="Admin._updateLinkedPicker(\'o-linked-vehs\',\'o-linked-vehs-picker\')">' +
+              '<input type="checkbox"' + chk + ' value="' + v.id + '" class="cyber-checkbox" style="width:14px;height:14px">' +
+              '<span>' + label + '</span>' +
+            '</label>';
+          }).join('');
+    }
+
+    // linked-props picker
+    const oLinkedProps = document.getElementById('o-linked-props');
+    if(oLinkedProps) oLinkedProps.value = (o.linkedProperties || []).join(', ');
+    const propPicker = document.getElementById('o-linked-props-picker');
+    if(propPicker) {
+      const selectedProps = new Set(o.linkedProperties || []);
+      propPicker.innerHTML = DB.properties.length === 0
+        ? '<div class="text-gray-600 text-[10px]">Henüz mülk yok.</div>'
+        : DB.properties.map(p => {
+            var checked = selectedProps.has(p.id);
+            var label = p.name || p.id;
+            var chk = checked ? ' checked' : '';
+            var cls = checked ? 'text-white' : 'text-gray-500';
+            return '<label class="flex items-center gap-2 cursor-pointer hover:text-white py-0.5 ' + cls + '" onclick="Admin._updateLinkedPicker(\'o-linked-props\',\'o-linked-props-picker\')">' +
+              '<input type="checkbox"' + chk + ' value="' + p.id + '" class="cyber-checkbox" style="width:14px;height:14px">' +
+              '<span>' + label + '</span>' +
+            '</label>';
+          }).join('');
+    }
     document.getElementById('o-btn-del').classList.remove('hidden');
     document.getElementById('org-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
    },
+   _updateLinkedPicker(hiddenId, pickerId) {
+    const picker = document.getElementById(pickerId);
+    const hidden = document.getElementById(hiddenId);
+    if(!picker || !hidden) return;
+    const checked = Array.from(picker.querySelectorAll('input[type=checkbox]:checked')).map(el => el.value);
+    hidden.value = checked.join(', ');
+    // Renk güncelle
+    picker.querySelectorAll('label').forEach(lbl => {
+      const cb = lbl.querySelector('input');
+      lbl.className = lbl.className.replace('text-white','text-gray-500').replace('text-gray-500','text-gray-500');
+      if(cb && cb.checked) lbl.classList.remove('text-gray-500'), lbl.classList.add('text-white');
+    });
+   },
+
    saveOrg(e) {
     if(e) e.preventDefault();
     const id = document.getElementById('o-id').value || `org_${Date.now()}`;

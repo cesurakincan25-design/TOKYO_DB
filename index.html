@@ -99,10 +99,7 @@ body.theme-light .stat-card, body.theme-light [class*="stat"] {
 }
 /* Scrollbar */
 body.theme-light ::-webkit-scrollbar-thumb { background: rgba(249,168,212,0.3) !important; }
-/* view-radar absolute fill */
-#view-radar:not(.hidden) {
-  display: block !important;
-}
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--mist); }
 ::-webkit-scrollbar-thumb { background: var(--sakura); border-radius: 2px; }
@@ -475,11 +472,9 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 /* ── GECE MODUNDA harita overlay ── */
 #radar-map-container {
   overflow: hidden;
-  position: absolute;
-  top: 44px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 #radar-map-container .map-night-overlay {
   position:absolute; inset:0; z-index:400;
@@ -916,7 +911,7 @@ input:focus, select:focus, textarea:focus {
         <div id="org-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
       <!-- Radar / Map -->
-      <div id="view-radar" class="view-section hidden" style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden">
+      <div id="view-radar" class="view-section hidden flex flex-col" style="height:calc(100vh - 120px);overflow:hidden">
         <div class="flex items-center gap-3 px-4 py-2 border-b" style="border-color:rgba(200,168,75,.2);background:rgba(248,245,240,.5)">
           <span class="font-mono text-xs" style="color:var(--indigo)"><i class="fas fa-map-marked-alt mr-1"></i>TOKYO HARİTASI</span>
           <div class="flex-1"></div>
@@ -931,7 +926,7 @@ input:focus, select:focus, textarea:focus {
             <input type="checkbox" id="map-show-events" checked onchange="UI.renderRadar()" class="cyber-checkbox">OLAYLAR
           </label>
         </div>
-        <div id="radar-map-container" class="relative" style="overflow:hidden;position:absolute;top:44px;left:0;right:0;bottom:0;cursor:grab" oncontextmenu="UI.handleMapClick(event);return false;">
+        <div id="radar-map-container" class="relative" style="overflow:hidden;flex:1;min-height:0;cursor:grab" oncontextmenu="UI.handleMapClick(event);return false;">
           <img id="radar-map-img" src="https://i.imgur.com/WDSHQvo.jpeg" style="position:absolute;top:0;left:0;width:100%;height:auto;display:block;user-select:none;pointer-events:none">
           <div class="absolute inset-0" style="background:rgba(12,8,24,0.25);pointer-events:none"></div>
           <!-- Pin overlay for renderRadar() map pins -->

@@ -931,8 +931,8 @@ input:focus, select:focus, textarea:focus {
             <input type="checkbox" id="map-show-events" checked onchange="UI.renderRadar()" class="cyber-checkbox">OLAYLAR
           </label>
         </div>
-        <div id="radar-map-container" class="relative" style="overflow:hidden;position:absolute;top:44px;left:0;right:0;bottom:0;cursor:grab">
-          <img id="radar-map-img" src="https://i.imgur.com/gCkC8oX.jpeg" style="position:absolute;top:0;left:0;width:100%;height:auto;display:block;user-select:none;pointer-events:none">
+        <div id="radar-map-container" class="relative" style="overflow:hidden;position:absolute;top:44px;left:0;right:0;bottom:0;cursor:grab" oncontextmenu="UI.handleMapClick(event);return false;">
+          <img id="radar-map-img" src="https://i.imgur.com/WDSHQvo.jpeg" style="position:absolute;top:0;left:0;width:100%;height:auto;display:block;user-select:none;pointer-events:none">
           <div class="absolute inset-0" style="background:rgba(12,8,24,0.25);pointer-events:none"></div>
           <!-- Pin overlay for renderRadar() map pins -->
           <div id="radar-pins" class="absolute inset-0" style="z-index:500"></div>

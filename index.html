@@ -99,6 +99,10 @@ body.theme-light .stat-card, body.theme-light [class*="stat"] {
 }
 /* Scrollbar */
 body.theme-light ::-webkit-scrollbar-thumb { background: rgba(249,168,212,0.3) !important; }
+/* view-radar absolute fill */
+#view-radar:not(.hidden) {
+  display: block !important;
+}
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--mist); }
 ::-webkit-scrollbar-thumb { background: var(--sakura); border-radius: 2px; }
@@ -471,8 +475,11 @@ body.bulk-mode .tokyo-card.selected { outline:2px solid var(--sakura); }
 /* ── GECE MODUNDA harita overlay ── */
 #radar-map-container {
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 #radar-map-container .map-night-overlay {
   position:absolute; inset:0; z-index:400;
@@ -825,7 +832,7 @@ input:focus, select:focus, textarea:focus {
   </aside>
 
   <!-- Main Content -->
-  <div id="main-content" class="flex-1 flex flex-col overflow-hidden">
+  <div id="main-content" class="flex-1 flex flex-col overflow-hidden" style="min-height:0;height:100%">
     <!-- Header -->
     <header id="app-header" class="h-14 flex items-center justify-between px-4 flex-shrink-0">
       <!-- Left: Hamburger + Logo -->
@@ -872,7 +879,7 @@ input:focus, select:focus, textarea:focus {
     <div id="tab-bar"></div>
 
     <!-- Views Container -->
-    <div class="flex-1 overflow-hidden relative" style="position:relative;min-height:0">
+    <div class="overflow-hidden relative" style="position:relative;flex:1;min-height:0;height:100%">
       <!-- Dashboard / Characters -->
       <div id="view-dashboard" class="view-section h-full overflow-y-auto p-4 hidden">
         <div id="stat-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-4">
@@ -909,7 +916,7 @@ input:focus, select:focus, textarea:focus {
         <div id="org-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
       <!-- Radar / Map -->
-      <div id="view-radar" class="view-section hidden flex flex-col" style="height:100%;overflow:hidden;position:absolute;top:0;left:0;right:0;bottom:0">
+      <div id="view-radar" class="view-section hidden" style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden">
         <div class="flex items-center gap-3 px-4 py-2 border-b" style="border-color:rgba(200,168,75,.2);background:rgba(248,245,240,.5)">
           <span class="font-mono text-xs" style="color:var(--indigo)"><i class="fas fa-map-marked-alt mr-1"></i>TOKYO HARİTASI</span>
           <div class="flex-1"></div>

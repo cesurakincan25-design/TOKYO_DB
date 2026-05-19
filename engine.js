@@ -1080,8 +1080,9 @@ var UI = {
      this.renderSearchOverlay(activeFilters.search);
     });
 
-    document.getElementById('radar-map-container').addEventListener('click', function(e) {
-     if (e.target.closest('.map-pin')) return; 
+    document.getElementById('radar-map-container').addEventListener('contextmenu', function(e) {
+     e.preventDefault();
+     if (e.target.closest('.map-pin')) return;
      const rect = this.getBoundingClientRect();
      const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
      const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
@@ -1093,7 +1094,7 @@ var UI = {
      document.execCommand('copy');
      document.body.removeChild(temp);
      
-     alert(`KOORDİNATLAR KOPYALANDI!\nX: ${x}\nY: ${y}\nAdmin panelindeki Map X / Map Y alanlarına yapıştırabilirsiniz.`);
+     showSaveToast(`📍 Koordinat kopyalandı: X:${x} Y:${y}`);
     });
    },
 

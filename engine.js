@@ -463,6 +463,20 @@ var Storage = {
      if(c.isArchived  === undefined) c.isArchived  = false;
      if(c.profileType === undefined) c.profileType = 'main';
      if(c.themeSong   === undefined) c.themeSong   = '';
+     // Kişisel bilgiler
+     if(c.age         === undefined) c.age         = '';
+     if(c.height      === undefined) c.height      = '';
+     if(c.weight      === undefined) c.weight      = '';
+     if(c.nationality === undefined) c.nationality = '';
+     if(c.birthday    === undefined) c.birthday    = '';
+     // Galeri
+     if(!c.gallery) c.gallery = [];
+     if(c.age         === undefined) c.age         = '';
+     if(c.height      === undefined) c.height      = '';
+     if(c.weight      === undefined) c.weight      = '';
+     if(c.nationality === undefined) c.nationality = '';
+     if(c.gender      === undefined) c.gender      = '';
+     if(c.gallery     === undefined) c.gallery     = [];
      if(c.mapX === undefined) c.mapX = null;
      if(c.mapY === undefined) c.mapY = null;
      
@@ -886,7 +900,7 @@ var UI = {
      // Supabase ve localStorage ikisi de boş - seedDB kullan ama Supabase'e YAZMA
      DB = CFG.seedDB ? JSON.parse(JSON.stringify(CFG.seedDB)) : {
       metadata: { version: "10.0", universe: CFG.universe || "RP", lastUpdated: new Date().toISOString() },
-      organizations: [], characters: [], vehicles: [], properties: [], equipments: [], contracts: [], cases: [], logs: []
+      organizations: [], characters: [], vehicles: [], properties: [], equipments: [], contracts: [], cases: [], logs: [], leaderboards: [], leaderboards: []
      };
      try { localStorage.setItem(Storage.KEY, JSON.stringify(DB)); } catch(e) {}
     } else {
@@ -1020,6 +1034,7 @@ var UI = {
       try{UI.renderGlobalSearchResults(activeFilters.search);}catch(e){}
      }
      this.renderCharacters();
+    try { this.renderLeaderboards(); } catch(e) {}
      this.renderVehicles();
      this.renderProperties();
      this.renderEquipments();
@@ -1045,6 +1060,47 @@ var UI = {
      
      showSaveToast(`📍 Koordinat kopyalandı: X:${x} Y:${y}`);
     });
+   },
+
+   renderLeaderboards() {
+    var container = document.getElementById('leaderboard-view-container');
+    if(!container) return;
+    var boards = DB.leaderboards || [];
+    if(boards.length === 0) {
+      container.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-16"><i class="fas fa-trophy text-2xl mb-3 block opacity-20"></i>Henüz leaderboard yok.<br>Admin panelinden yeni bir tane oluştur.</div>';
+      return;
+    }
+    container.innerHTML = boards.map(function(b) {
+      var color = b.color || '#00a2ff';
+      var entries = b.entries || [];
+      return '<div class="glass-panel p-5 border" style="border-color:' + color + '30">' +
+        '<div class="flex items-center justify-between mb-4">' +
+          '<div>' +
+            '<div class="font-display text-lg font-bold tracking-widest" style="color:' + color + '">' +
+              '<i class="fas fa-trophy mr-2" style="opacity:.7"></i>' + (b.name || 'Leaderboard') +
+            '</div>' +
+            (b.description ? '<div class="font-mono text-[10px] mt-1" style="color:rgba(255,255,255,.35)">' + b.description + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        (entries.length === 0
+          ? '<div class="font-mono text-xs text-gray-600 text-center py-6">Kayıt yok.</div>'
+          : '<div class="space-y-1">' +
+              entries.map(function(e, i) {
+                var rankColor = i===0 ? '#FFD700' : i===1 ? '#C0C0C0' : i===2 ? '#CD7F32' : 'rgba(255,255,255,.3)';
+                var rankIcon = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1) + '.';
+                return '<div class="flex items-center gap-3 p-2 border-b" style="border-color:rgba(255,255,255,.05)">' +
+                  '<div class="font-mono text-sm w-8 text-center" style="color:' + rankColor + '">' + rankIcon + '</div>' +
+                  '<div class="flex-1">' +
+                    '<div class="font-mono text-xs" style="color:#e8e2d9">' + (e.name || '') + '</div>' +
+                    (e.subtitle ? '<div class="font-mono text-[10px]" style="color:rgba(255,255,255,.4)">' + e.subtitle + '</div>' : '') +
+                  '</div>' +
+                  (e.score ? '<div class="font-mono text-sm font-bold" style="color:' + color + '">' + e.score + '</div>' : '') +
+                '</div>';
+              }).join('') +
+            '</div>'
+        ) +
+      '</div>';
+    }).join('');
    },
 
    renderAll() {
@@ -1178,6 +1234,14 @@ var UI = {
     
 
     const charOrgs = c.organizations || (c.organization ? [c.organization] : []);
+    // Karakter detay bilgileri (age, height, weight vs)
+    var charDetails = [];
+    if(c.nationality) charDetails.push({ label: 'Uyruk', value: c.nationality, icon: 'fa-flag' });
+    if(c.gender)      charDetails.push({ label: 'Cinsiyet', value: c.gender, icon: 'fa-user' });
+    if(c.age)         charDetails.push({ label: 'Yaş', value: c.age, icon: 'fa-birthday-cake' });
+    if(c.height)      charDetails.push({ label: 'Boy', value: c.height, icon: 'fa-ruler-vertical' });
+    if(c.weight)      charDetails.push({ label: 'Kilo', value: c.weight, icon: 'fa-weight' });
+
     const orgBadges = charOrgs.map(oid => {
      const o = DB.organizations.find(x => x.id === oid);
      return o ? `<span class="font-mono text-[10px] border px-2 py-0.5" style="color:${o.color};border-color:${o.color}50">${o.name}</span>` : '';
@@ -1282,11 +1346,34 @@ var UI = {
        </div>
 
        
+       ${(c.age||c.height||c.weight||c.nationality||c.birthday) ? `<div class="glass-panel p-4 border border-gray-800">
+        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-3">KİŞİSEL BİLGİLER</div>
+        <div class="grid grid-cols-2 gap-2 font-mono text-xs">
+          ${c.age ? `<div><span class="text-gray-500">YAŞ:</span> <span class="text-gray-200">${c.age}</span></div>` : ''}
+          ${c.birthday ? `<div><span class="text-gray-500">DOĞUM:</span> <span class="text-gray-200">${c.birthday}</span></div>` : ''}
+          ${c.height ? `<div><span class="text-gray-500">BOY:</span> <span class="text-gray-200">${c.height}</span></div>` : ''}
+          ${c.weight ? `<div><span class="text-gray-500">KİLO:</span> <span class="text-gray-200">${c.weight}</span></div>` : ''}
+          ${c.nationality ? `<div class="col-span-2"><span class="text-gray-500">UYRUK:</span> <span class="text-gray-200">${c.nationality}</span></div>` : ''}
+        </div>
+       </div>` : ''}
        ${c.story ? `<div class="glass-panel p-4 border border-gray-800">
         <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2">BACKGROUND</div>
         <p class="font-mono text-xs text-gray-300 leading-relaxed whitespace-pre-line">${c.story}</p>
        </div>` : ''}
+       ${(c.gallery && c.gallery.length > 0) ? `<div class="glass-panel p-4 border border-gray-800">
+        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-3">GALERİ</div>
+        <div class="flex flex-wrap gap-2">
+          ${c.gallery.map(url => `<img src="${url}" style="width:120px;height:90px;object-fit:cover;border:1px solid rgba(255,255,255,.1);cursor:pointer" onclick="window.open('${url}','_blank')">`).join('')}
+        </div>
+       </div>` : ''}
        <div id="theme-song-player"></div>
+       ${(c.gallery && c.gallery.length > 0) ? `
+       <div class="glass-panel p-4 border border-gray-800/50 mt-3">
+        <h4 class="font-mono text-[10px] text-gray-500 tracking-widest mb-3 uppercase"><i class="fas fa-images mr-2"></i>GALERİ</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+         ${(c.gallery || []).map(url => '<img src="' + url + '" style="height:120px;width:auto;max-width:200px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,255,255,.1);cursor:pointer" onclick="window.open(this.src,\'_blank\')">').join('')}
+        </div>
+       </div>` : ''}
 
        
        ${rels ? `<div>
@@ -2190,6 +2277,41 @@ var UI = {
    },
    closeCaseModal(){const m=document.getElementById('case-detail-modal');if(m)m.style.display='none';},
 
+   renderLeaderboards() {
+    var grid = document.getElementById('leaderboard-grid');
+    if(!grid) return;
+    var boards = DB.leaderboards || [];
+    if(boards.length === 0) {
+      grid.innerHTML = '<div class="col-span-full text-center py-16 font-mono text-gray-600 text-sm"><i class="fas fa-trophy mr-2 opacity-30"></i>Henüz leaderboard yok. Admin panelinden ekleyebilirsin.</div>';
+      return;
+    }
+    grid.innerHTML = boards.map(function(board) {
+      var color = board.color || '#00a2ff';
+      var entries = (board.entries || []).map(function(e, i) {
+        var rankColor = i === 0 ? '#fbbf24' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c2f' : 'rgba(255,255,255,.4)';
+        var rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1) + '.';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05)">' +
+          '<span style="font-size:14px;width:28px;text-align:center;color:' + rankColor + '">' + rankLabel + '</span>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:12px;color:#e8e2d9">' + (e.name || '—') + '</div>' +
+            (e.subtitle ? '<div style="font-size:10px;color:rgba(255,255,255,.35)">' + e.subtitle + '</div>' : '') +
+          '</div>' +
+          (e.score !== undefined && e.score !== '' ? '<span style="font-family:monospace;font-size:11px;color:' + color + '">' + e.score + '</span>' : '') +
+        '</div>';
+      }).join('');
+      return '<div class="glass-panel" style="border:1px solid ' + color + '30;overflow:hidden">' +
+        '<div style="padding:14px 16px;border-bottom:1px solid ' + color + '20;display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+            '<i class="fas fa-trophy" style="color:' + color + ';font-size:14px"></i>' +
+            '<span style="font-family:monospace;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:' + color + '">' + board.name + '</span>' +
+          '</div>' +
+          '<span style="font-size:10px;font-family:monospace;color:rgba(255,255,255,.25)">' + (board.entries || []).length + ' kayıt</span>' +
+        '</div>' +
+        (entries || '<div style="padding:24px;text-align:center;font-family:monospace;font-size:11px;color:rgba(255,255,255,.2)">Henüz kayıt yok</div>') +
+      '</div>';
+    }).join('');
+   },
+
    renderVehicles() {
     const dict = i18n[currentLang];
     const grid = document.getElementById('vehicle-grid');
@@ -2846,6 +2968,8 @@ var Admin = {
     try{UI.updateMobileTab(tab);}catch(e){}
     if(tab === 'audit') this.refreshAuditPanel();
     if(tab === 'backup') this.loadBackups();
+    if(tab === 'leaderboard') { this.loadLeaderboards(); try{UI.renderLeaderboards();}catch(e){} }
+    if(tab === 'leaderboard') Admin.loadLeaderboards();
     if(tab === 'events') this.loadEvents();
    },
    loadChars() {
@@ -2923,6 +3047,24 @@ var Admin = {
     if(document.getElementById('c-archived'))  document.getElementById('c-archived').checked  = c.isArchived  || false;
     if(document.getElementById('c-profile-type')) document.getElementById('c-profile-type').value = c.profileType || 'main';
     if(document.getElementById('c-theme-song'))   document.getElementById('c-theme-song').value   = c.themeSong   || '';
+    if(document.getElementById('c-age'))          document.getElementById('c-age').value          = c.age          || '';
+    if(document.getElementById('c-height'))       document.getElementById('c-height').value       = c.height       || '';
+    if(document.getElementById('c-weight'))       document.getElementById('c-weight').value       = c.weight       || '';
+    if(document.getElementById('c-nationality'))  document.getElementById('c-nationality').value  = c.nationality  || '';
+    if(document.getElementById('c-birthday'))     document.getElementById('c-birthday').value     = c.birthday     || '';
+    // Galeri
+    var galleryEl = document.getElementById('c-gallery-data');
+    if(galleryEl) galleryEl.value = JSON.stringify(c.gallery || []);
+    Admin._renderGalleryPreview(c.gallery || []);
+    if(document.getElementById('c-age'))          document.getElementById('c-age').value          = c.age          || '';
+    if(document.getElementById('c-height'))       document.getElementById('c-height').value       = c.height       || '';
+    if(document.getElementById('c-weight'))       document.getElementById('c-weight').value       = c.weight       || '';
+    if(document.getElementById('c-nationality'))  document.getElementById('c-nationality').value  = c.nationality  || '';
+    if(document.getElementById('c-gender'))       document.getElementById('c-gender').value       = c.gender       || '';
+    // Galeri
+    var gd = document.getElementById('c-gallery-data');
+    if(gd) gd.value = JSON.stringify(c.gallery || []);
+    Admin._renderGalleryPreview(c.gallery || []);
     document.getElementById('c-mapx').value = c.mapX || ''; 
     document.getElementById('c-mapy').value = c.mapY || '';
     document.getElementById('c-img').value = c.image || ''; 
@@ -3055,6 +3197,21 @@ var Admin = {
      isArchived:  document.getElementById('c-archived')?.checked || false,
      profileType: document.getElementById('c-profile-type')?.value || 'main',
      themeSong:   document.getElementById('c-theme-song')?.value?.trim() || '',
+     age:         document.getElementById('c-age')?.value?.trim() || '',
+     height:      document.getElementById('c-height')?.value?.trim() || '',
+     weight:      document.getElementById('c-weight')?.value?.trim() || '',
+     nationality: document.getElementById('c-nationality')?.value?.trim() || '',
+     birthday:    document.getElementById('c-birthday')?.value?.trim() || '',
+     gallery:     (()=>{ try{ return JSON.parse(document.getElementById('c-gallery-data')?.value||'[]'); }catch(e){return [];} })(),
+     age:         document.getElementById('c-age')?.value?.trim() || '',
+     height:      document.getElementById('c-height')?.value?.trim() || '',
+     weight:      document.getElementById('c-weight')?.value?.trim() || '',
+     nationality: document.getElementById('c-nationality')?.value?.trim() || '',
+     gender:      document.getElementById('c-gender')?.value?.trim() || '',
+     gallery:     (function(){
+       var g = document.getElementById('c-gallery-data');
+       try { return g ? JSON.parse(g.value || '[]') : []; } catch(e) { return []; }
+     })(),
      mapX: document.getElementById('c-mapx').value || null, 
      mapY: document.getElementById('c-mapy').value || null,
      image: document.getElementById('c-img').value, 
@@ -3207,6 +3364,77 @@ var Admin = {
     document.getElementById('o-btn-del').classList.remove('hidden');
     document.getElementById('org-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
    },
+   _renderGalleryPreview(gallery) {
+    var wrap = document.getElementById('c-gallery-preview');
+    if(!wrap) return;
+    var imgs = (gallery || []);
+    if(imgs.length === 0) { wrap.innerHTML = '<div class="text-gray-600 text-[10px] py-2">Henüz görsel yok.</div>'; return; }
+    wrap.innerHTML = imgs.map(function(url, i) {
+      return '<div class="relative group inline-block mr-2 mb-2">' +
+        '<img src="' + url + '" style="width:64px;height:64px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,255,255,.1)">' +
+        '<button onclick="Admin._removeGalleryImg(' + i + ')" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#ff2a2a;border:none;border-radius:50%;color:white;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>' +
+      '</div>';
+    }).join('');
+   },
+   _addGalleryImg() {
+    var inp = document.getElementById('c-gallery-input');
+    if(!inp || !inp.value.trim()) return;
+    var gd = document.getElementById('c-gallery-data');
+    var gallery = [];
+    try { gallery = JSON.parse(gd.value || '[]'); } catch(e) {}
+    gallery.push(inp.value.trim());
+    gd.value = JSON.stringify(gallery);
+    inp.value = '';
+    this._renderGalleryPreview(gallery);
+   },
+   _removeGalleryImg(idx) {
+    var gd = document.getElementById('c-gallery-data');
+    var gallery = [];
+    try { gallery = JSON.parse(gd.value || '[]'); } catch(e) {}
+    gallery.splice(idx, 1);
+    gd.value = JSON.stringify(gallery);
+    this._renderGalleryPreview(gallery);
+   },
+
+   // ── GALERİ YÖNETİMİ ──
+   _renderGalleryPreview(gallery) {
+    var container = document.getElementById('c-gallery-preview');
+    if(!container) return;
+    var items = gallery || [];
+    container.innerHTML = items.length === 0
+      ? '<div class="text-gray-600 text-[10px] font-mono">Henüz fotoğraf yok.</div>'
+      : items.map(function(url, i) {
+          return '<div class="relative group" style="width:80px;height:80px;display:inline-block;margin:2px">' +
+            '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(255,255,255,.15)">' +
+            '<button onclick="Admin._removeGalleryItem(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(255,0,0,.7);color:#fff;border:none;width:18px;height:18px;font-size:10px;cursor:pointer;display:none" class="group-hover:block">✕</button>' +
+          '</div>';
+        }).join('');
+    var galleryEl = document.getElementById('c-gallery-data');
+    if(galleryEl) galleryEl.value = JSON.stringify(items);
+   },
+
+   _addGalleryItem() {
+    var urlEl = document.getElementById('c-gallery-url');
+    if(!urlEl || !urlEl.value.trim()) return;
+    var url = urlEl.value.trim();
+    var galleryEl = document.getElementById('c-gallery-data');
+    var items = [];
+    try { items = JSON.parse(galleryEl.value || '[]'); } catch(e) {}
+    items.push(url);
+    galleryEl.value = JSON.stringify(items);
+    this._renderGalleryPreview(items);
+    urlEl.value = '';
+   },
+
+   _removeGalleryItem(idx) {
+    var galleryEl = document.getElementById('c-gallery-data');
+    var items = [];
+    try { items = JSON.parse(galleryEl.value || '[]'); } catch(e) {}
+    items.splice(idx, 1);
+    galleryEl.value = JSON.stringify(items);
+    this._renderGalleryPreview(items);
+   },
+
    _updateLinkedPicker(hiddenId, pickerId) {
     const picker = document.getElementById(pickerId);
     const hidden = document.getElementById(hiddenId);
@@ -3985,6 +4213,227 @@ var Admin = {
      var msgs={char:'Karakter kaydedildi',org:'Organizasyon kaydedildi',veh:'Araç kaydedildi',prop:'Mülk kaydedildi',eq:'Ekipman kaydedildi',con:'Kontrat kaydedildi','case':'Dava kaydedildi',log:'Kayıt eklendi',ev:'Olay kaydedildi'};
      if(typeof showSaveToast==='function') showSaveToast(msgs[prefix]||'Kaydedildi ✓');
     }catch(e){}
+   },
+
+   // ── LEADERBOARD ADMIN ────────────────────────────────
+   loadLeaderboards() {
+    var list = document.getElementById('lb-list');
+    if(!list) return;
+    var boards = DB.leaderboards || [];
+    if(boards.length === 0) {
+      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-8">Henüz leaderboard yok.</div>';
+      return;
+    }
+    list.innerHTML = boards.map(function(b, i) {
+      var color = b.color || '#00a2ff';
+      return '<div style="border:1px solid ' + color + '30;padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.4)">' +
+        '<div>' +
+          '<div style="color:' + color + ';font-family:monospace;font-size:12px;font-weight:bold">' + b.name + '</div>' +
+          '<div style="color:rgba(255,255,255,.35);font-size:10px;margin-top:2px">' + (b.entries || []).length + ' kayıt · ' + (b.description || '') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="Admin.editLeaderboard(\'' + b.id + '\')" style="border:1px solid ' + color + '50;color:' + color + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer">DÜZENLE</button>' +
+          '<button onclick="Admin.deleteLeaderboard(\'' + b.id + '\')" style="border:1px solid #ff2a2a50;color:#ff2a2a;background:transparent;padding:4px 10px;font-family:monospace;font-size:10px;cursor:pointer">SİL</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+   },
+   saveLeaderboard(e) {
+    if(e) e.preventDefault();
+    var name = document.getElementById('lb-name')?.value?.trim();
+    var color = document.getElementById('lb-color')?.value || '#00a2ff';
+    var desc  = document.getElementById('lb-desc')?.value?.trim() || '';
+    if(!name) return;
+    var id = document.getElementById('lb-id')?.value;
+    if(!DB.leaderboards) DB.leaderboards = [];
+    if(id) {
+      var board = DB.leaderboards.find(function(b){ return b.id === id; });
+      if(board) { board.name = name; board.color = color; board.description = desc; }
+    } else {
+      DB.leaderboards.push({ id: 'lb_' + Date.now(), name: name, color: color, description: desc, entries: [] });
+    }
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboards();
+    this.clearLeaderboardForm();
+    UI.renderLeaderboards();
+   },
+   editLeaderboard(id) {
+    var board = (DB.leaderboards || []).find(function(b){ return b.id === id; });
+    if(!board) return;
+    if(document.getElementById('lb-id'))    document.getElementById('lb-id').value    = board.id;
+    if(document.getElementById('lb-name'))  document.getElementById('lb-name').value  = board.name;
+    if(document.getElementById('lb-color')) document.getElementById('lb-color').value = board.color || '#00a2ff';
+    if(document.getElementById('lb-desc'))  document.getElementById('lb-desc').value  = board.description || '';
+    // Entries listesini göster
+    this.loadLeaderboardEntries(board);
+   },
+   deleteLeaderboard(id) {
+    if(!confirm('Bu leaderboard\'u silmek istiyor musun?')) return;
+    DB.leaderboards = (DB.leaderboards || []).filter(function(b){ return b.id !== id; });
+    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboards(); UI.renderLeaderboards();
+   },
+   clearLeaderboardForm() {
+    ['lb-id','lb-name','lb-desc'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value = ''; });
+    var el = document.getElementById('lb-entries'); if(el) el.innerHTML = '';
+   },
+   loadLeaderboardEntries(board) {
+    var cont = document.getElementById('lb-entries');
+    if(!cont) return;
+    var entries = board.entries || [];
+    cont.innerHTML = '<div style="margin-top:12px">' +
+      '<div style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.15em;margin-bottom:8px">KAYITLAR</div>' +
+      entries.map(function(e, i) {
+        var bid = board.id;
+        return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">' +
+          '<span style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3);width:20px">' + (i+1) + '.</span>' +
+          '<input value="' + (e.name||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'name\',this.value)" style="flex:2;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="İsim">' +
+          '<input value="' + (e.subtitle||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'subtitle\',this.value)" style="flex:2;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="Alt başlık">' +
+          '<input value="' + (e.score||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'score\',this.value)" style="width:80px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="Skor">' +
+          '<button onclick="Admin._moveEntry(\'' + bid + '\',' + i + ',-1)" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 7px;cursor:pointer;font-size:10px">↑</button>' +
+          '<button onclick="Admin._moveEntry(\'' + bid + '\',' + i + ',1)" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 7px;cursor:pointer;font-size:10px">↓</button>' +
+          '<button onclick="Admin._removeEntry(\'' + bid + '\',' + i + ')" style="background:transparent;border:1px solid #ff2a2a50;color:#ff2a2a;padding:3px 7px;cursor:pointer;font-size:10px">✕</button>' +
+        '</div>';
+      }).join('') +
+      '<button onclick="Admin._addEntry(\'' + board.id + '\')" style="margin-top:8px;border:1px solid rgba(0,162,255,.3);color:#00a2ff;background:transparent;padding:5px 16px;font-family:monospace;font-size:10px;cursor:pointer;width:100%">+ KAYIT EKLE</button>' +
+    '</div>';
+   },
+   _updateEntry(boardId, idx, field, value) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board || !board.entries[idx]) return;
+    board.entries[idx][field] = value;
+    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
+    UI.renderLeaderboards();
+   },
+   _addEntry(boardId) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    if(!board.entries) board.entries = [];
+    board.entries.push({ name: 'Yeni Kayıt', subtitle: '', score: '' });
+    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
+   },
+   _removeEntry(boardId, idx) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    board.entries.splice(idx, 1);
+    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
+   },
+   _moveEntry(boardId, idx, dir) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    var newIdx = idx + dir;
+    if(newIdx < 0 || newIdx >= board.entries.length) return;
+    var tmp = board.entries[idx]; board.entries[idx] = board.entries[newIdx]; board.entries[newIdx] = tmp;
+    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
+   },
+
+   // ── LEADERBOARD YÖNETİMİ ──
+   loadLeaderboards() {
+    var list = document.getElementById('admin-leaderboard-list');
+    if(!list) return;
+    var boards = DB.leaderboards || [];
+    if(boards.length === 0) {
+      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-6">Henüz leaderboard yok.</div>';
+      return;
+    }
+    list.innerHTML = boards.map(function(b) {
+      var color = b.color || '#00a2ff';
+      return '<div class="flex items-center justify-between p-3 border font-mono text-xs" style="border-color:' + color + '40;background:rgba(0,0,0,.4)">' +
+        '<div>' +
+          '<div style="color:' + color + ';font-weight:bold"><i class="fas fa-trophy mr-2"></i>' + (b.name||'?') + '</div>' +
+          '<div style="color:rgba(255,255,255,.4);margin-top:2px">' + (b.entries||[]).length + ' kayıt</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="Admin.editLeaderboard(\'' + b.id + '\')" style="border:1px solid ' + color + '50;color:' + color + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer">DÜZENLE</button>' +
+          '<button onclick="Admin.deleteLeaderboard(\'' + b.id + '\')" style="border:1px solid #ff2a2a50;color:#ff2a2a;background:transparent;padding:4px 10px;font-family:monospace;font-size:10px;cursor:pointer">SİL</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+   },
+
+   createLeaderboard() {
+    var id = 'lb_' + Date.now();
+    if(!DB.leaderboards) DB.leaderboards = [];
+    DB.leaderboards.push({ id: id, name: 'Yeni Leaderboard', color: '#00a2ff', description: '', entries: [] });
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboards();
+    this.editLeaderboard(id);
+   },
+
+   deleteLeaderboard(id) {
+    if(!confirm('Bu leaderboard\u0027u silmek istiyor musun?')) return;
+    DB.leaderboards = (DB.leaderboards||[]).filter(function(b){return b.id!==id;});
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboards();
+    var editor = document.getElementById('admin-leaderboard-editor');
+    if(editor) { editor.innerHTML=''; editor.classList.add('hidden'); }
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+
+   _saveLbMeta(id) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===id;});
+    if(!board) return;
+    var nameEl  = document.getElementById('lb-name-'  + id);
+    var descEl  = document.getElementById('lb-desc-'  + id);
+    var colorEl = document.getElementById('lb-color-' + id);
+    if(nameEl)  board.name        = nameEl.value;
+    if(descEl)  board.description = descEl.value;
+    if(colorEl) board.color       = colorEl.value;
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.loadLeaderboards();
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+   _addEntry(boardId) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    if(!board.entries) board.entries = [];
+    board.entries.push({ name: '', subtitle: '', score: '' });
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.editLeaderboard(boardId);
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+   _removeEntry(boardId, idx) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    board.entries.splice(idx, 1);
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.editLeaderboard(boardId);
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+   _moveEntry(boardId, idx, dir) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board) return;
+    var newIdx = idx + dir;
+    if(newIdx < 0 || newIdx >= board.entries.length) return;
+    var tmp = board.entries[idx];
+    board.entries[idx] = board.entries[newIdx];
+    board.entries[newIdx] = tmp;
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    this.editLeaderboard(boardId);
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+   _updateEntry(boardId, idx, field, value) {
+    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+    if(!board || !board.entries[idx]) return;
+    board.entries[idx][field] = value;
+    Storage.save(DB);
+    SupaSync.save(DB, window.currentOperator);
+    try { UI.renderLeaderboards(); } catch(e) {}
    },
 
    async loadBackups() {

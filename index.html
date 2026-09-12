@@ -650,7 +650,7 @@ input:focus, select:focus, textarea:focus {
   window._fbFirestoreReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 </script>
 </head>
 <body class="bg-grid">
@@ -1777,6 +1777,10 @@ input:focus, select:focus, textarea:focus {
                 <div class="z-10 flex-1">
                     <span class="text-cyber-blue block text-xs mb-3 flex items-center" data-i18n="psych_intel">PSYCHOLOGICAL / HISTORICAL INTEL</span>
                     <p id="modal-story" class="text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line text-justify"></p>
+                    <!-- Galeri Butonu -->
+                    <button id="modal-gallery-btn" class="cyber-button px-4 py-2 text-xs click-sfx mt-2" style="display:none;align-items:center;gap:6px">
+                      <i class="fas fa-images mr-1"></i>GALERİ
+                    </button>
                     <div id="modal-theme-song-player" class="mt-4"></div>
                 </div>
 
@@ -1948,7 +1952,7 @@ input:focus, select:focus, textarea:focus {
     </div>
 
 <!-- ── Shared Engine ── -->
-<script src="engine.js?v=2"></script>
+<script src="engine.js?v=3"></script>
 <script>
 // ── TOKYO TEMA SİSTEMİ ──
 const TOKYO_THEMES = {

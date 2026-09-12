@@ -1103,6 +1103,52 @@ var UI = {
     }).join('');
    },
 
+   openGallery(images, startIdx) {
+    var existing = document.getElementById('gallery-fullscreen-modal');
+    if(existing) existing.remove();
+    var idx = startIdx || 0;
+    var modal = document.createElement('div');
+    modal.id = 'gallery-fullscreen-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center';
+    function render() {
+      modal.innerHTML =
+        '<div style="position:absolute;top:16px;right:16px;display:flex;gap:8px">' +
+          '<span style="font-family:monospace;font-size:12px;color:rgba(255,255,255,.4)">' + (idx+1) + ' / ' + images.length + '</span>' +
+          '<button onclick="var gm=document.getElementById(\'gallery-fullscreen-modal\');if(gm)gm.remove()" ' +
+            'style="background:rgba(255,255,255,.1);border:none;color:white;width:32px;height:32px;font-size:16px;cursor:pointer;border-radius:2px">✕</button>' +
+        '</div>' +
+        '<div style="position:absolute;left:16px;top:50%;transform:translateY(-50%)">' +
+          (idx > 0 ? '<button onclick="window._galleryNav(-1)" style="background:rgba(255,255,255,.1);border:none;color:white;width:44px;height:44px;font-size:20px;cursor:pointer;border-radius:2px">‹</button>' : '') +
+        '</div>' +
+        '<div style="position:absolute;right:16px;top:50%;transform:translateY(-50%)">' +
+          (idx < images.length-1 ? '<button onclick="window._galleryNav(1)" style="background:rgba(255,255,255,.1);border:none;color:white;width:44px;height:44px;font-size:20px;cursor:pointer;border-radius:2px">›</button>' : '') +
+        '</div>' +
+        '<img src="' + images[idx] + '" style="max-width:90vw;max-height:85vh;object-fit:contain;border:1px solid rgba(255,255,255,.1)">' +
+        '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;justify-content:center;max-width:90vw">' +
+          images.map(function(url, i) {
+            return '<img src="' + url + '" onclick="window._galleryNav(' + (i - idx) + ')" ' +
+              'style="width:50px;height:36px;object-fit:cover;cursor:pointer;border:2px solid ' + (i===idx ? 'white' : 'transparent') + ';opacity:' + (i===idx ? '1' : '.5') + '">';
+          }).join('') +
+        '</div>';
+      window._galleryNav = function(dir) {
+        idx = Math.max(0, Math.min(images.length-1, idx+dir));
+        render();
+      };
+    }
+    render();
+    document.body.appendChild(modal);
+    // Klavye navigasyon
+    modal._keyHandler = function(e) {
+      if(e.key === 'ArrowLeft') window._galleryNav(-1);
+      else if(e.key === 'ArrowRight') window._galleryNav(1);
+      else if(e.key === 'Escape') modal.remove();
+    };
+    document.addEventListener('keydown', modal._keyHandler);
+    modal.addEventListener('remove', function() {
+      document.removeEventListener('keydown', modal._keyHandler);
+    });
+   },
+
    renderAll() {
     this.renderFilters();
     this.renderAnalytics();
@@ -1361,9 +1407,9 @@ var UI = {
         <p class="font-mono text-xs text-gray-300 leading-relaxed whitespace-pre-line">${c.story}</p>
        </div>` : ''}
        ${(c.gallery && c.gallery.length > 0) ? `<div class="glass-panel p-4 border border-gray-800">
-        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-3">GALERİ</div>
+        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-3"><i class="fas fa-images mr-2"></i>GALERİ (${c.gallery.length})</div>
         <div class="flex flex-wrap gap-2">
-          ${c.gallery.map(url => `<img src="${url}" style="width:120px;height:90px;object-fit:cover;border:1px solid rgba(255,255,255,.1);cursor:pointer" onclick="window.open('${url}','_blank')">`).join('')}
+          ${c.gallery.map((url,gi) => `<img src="${url}" style="width:110px;height:80px;object-fit:cover;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(255,255,255,.5)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'" onclick="UI.openGallery(${JSON.stringify(c.gallery)},${gi})">`).join('')}
         </div>
        </div>` : ''}
        <div id="theme-song-player"></div>
@@ -2277,40 +2323,7 @@ var UI = {
    },
    closeCaseModal(){const m=document.getElementById('case-detail-modal');if(m)m.style.display='none';},
 
-   renderLeaderboards() {
-    var grid = document.getElementById('leaderboard-grid');
-    if(!grid) return;
-    var boards = DB.leaderboards || [];
-    if(boards.length === 0) {
-      grid.innerHTML = '<div class="col-span-full text-center py-16 font-mono text-gray-600 text-sm"><i class="fas fa-trophy mr-2 opacity-30"></i>Henüz leaderboard yok. Admin panelinden ekleyebilirsin.</div>';
-      return;
-    }
-    grid.innerHTML = boards.map(function(board) {
-      var color = board.color || '#00a2ff';
-      var entries = (board.entries || []).map(function(e, i) {
-        var rankColor = i === 0 ? '#fbbf24' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c2f' : 'rgba(255,255,255,.4)';
-        var rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1) + '.';
-        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05)">' +
-          '<span style="font-size:14px;width:28px;text-align:center;color:' + rankColor + '">' + rankLabel + '</span>' +
-          '<div style="flex:1">' +
-            '<div style="font-size:12px;color:#e8e2d9">' + (e.name || '—') + '</div>' +
-            (e.subtitle ? '<div style="font-size:10px;color:rgba(255,255,255,.35)">' + e.subtitle + '</div>' : '') +
-          '</div>' +
-          (e.score !== undefined && e.score !== '' ? '<span style="font-family:monospace;font-size:11px;color:' + color + '">' + e.score + '</span>' : '') +
-        '</div>';
-      }).join('');
-      return '<div class="glass-panel" style="border:1px solid ' + color + '30;overflow:hidden">' +
-        '<div style="padding:14px 16px;border-bottom:1px solid ' + color + '20;display:flex;align-items:center;justify-content:space-between">' +
-          '<div style="display:flex;align-items:center;gap:10px">' +
-            '<i class="fas fa-trophy" style="color:' + color + ';font-size:14px"></i>' +
-            '<span style="font-family:monospace;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:' + color + '">' + board.name + '</span>' +
-          '</div>' +
-          '<span style="font-size:10px;font-family:monospace;color:rgba(255,255,255,.25)">' + (board.entries || []).length + ' kayıt</span>' +
-        '</div>' +
-        (entries || '<div style="padding:24px;text-align:center;font-family:monospace;font-size:11px;color:rgba(255,255,255,.2)">Henüz kayıt yok</div>') +
-      '</div>';
-    }).join('');
-   },
+
 
    renderVehicles() {
     const dict = i18n[currentLang];
@@ -2587,6 +2600,19 @@ var UI = {
     if(mId) mId.innerText = (c.id || "").toUpperCase();
     const mStory = document.getElementById('modal-story');
     if(mStory) mStory.innerText = c.story || 'No historical data available.';
+
+    // Galeri butonu - char-modal
+    var mGalleryBtn = document.getElementById('modal-gallery-btn');
+    if(mGalleryBtn) {
+      var gallery = c.gallery || [];
+      if(gallery.length > 0) {
+        mGalleryBtn.style.display = 'flex';
+        mGalleryBtn.onclick = function() { UI.openGallery(gallery, 0); };
+        mGalleryBtn.innerHTML = '<i class="fas fa-images mr-1"></i>GALERİ (' + gallery.length + ')';
+      } else {
+        mGalleryBtn.style.display = 'none';
+      }
+    }
 
     // Theme Song - char-modal için
     const mSongEl = document.getElementById('modal-theme-song-player');
@@ -2969,7 +2995,6 @@ var Admin = {
     if(tab === 'audit') this.refreshAuditPanel();
     if(tab === 'backup') this.loadBackups();
     if(tab === 'leaderboard') { this.loadLeaderboards(); try{UI.renderLeaderboards();}catch(e){} }
-    if(tab === 'leaderboard') Admin.loadLeaderboards();
     if(tab === 'events') this.loadEvents();
    },
    loadChars() {
@@ -3402,11 +3427,14 @@ var Admin = {
     if(!container) return;
     var items = gallery || [];
     container.innerHTML = items.length === 0
-      ? '<div class="text-gray-600 text-[10px] font-mono">Henüz fotoğraf yok.</div>'
+      ? '<div class="text-gray-600 text-[10px] font-mono py-2">Henüz fotoğraf yok.</div>'
       : items.map(function(url, i) {
-          return '<div class="relative group" style="width:80px;height:80px;display:inline-block;margin:2px">' +
+          return '<div style="width:80px;height:80px;display:inline-block;margin:2px;position:relative">' +
             '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border:1px solid rgba(255,255,255,.15)">' +
-            '<button onclick="Admin._removeGalleryItem(' + i + ')" style="position:absolute;top:2px;right:2px;background:rgba(255,0,0,.7);color:#fff;border:none;width:18px;height:18px;font-size:10px;cursor:pointer;display:none" class="group-hover:block">✕</button>' +
+            '<button onclick="Admin._removeGalleryItem(' + i + ')" ' +
+              'style="position:absolute;top:2px;right:2px;background:rgba(200,0,0,.85);color:#fff;border:none;' +
+              'width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;border-radius:2px;' +
+              'display:flex;align-items:center;justify-content:center;font-weight:bold">✕</button>' +
           '</div>';
         }).join('');
     var galleryEl = document.getElementById('c-gallery-data');
@@ -4216,48 +4244,7 @@ var Admin = {
    },
 
    // ── LEADERBOARD ADMIN ────────────────────────────────
-   loadLeaderboards() {
-    var list = document.getElementById('lb-list');
-    if(!list) return;
-    var boards = DB.leaderboards || [];
-    if(boards.length === 0) {
-      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-8">Henüz leaderboard yok.</div>';
-      return;
-    }
-    list.innerHTML = boards.map(function(b, i) {
-      var color = b.color || '#00a2ff';
-      return '<div style="border:1px solid ' + color + '30;padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.4)">' +
-        '<div>' +
-          '<div style="color:' + color + ';font-family:monospace;font-size:12px;font-weight:bold">' + b.name + '</div>' +
-          '<div style="color:rgba(255,255,255,.35);font-size:10px;margin-top:2px">' + (b.entries || []).length + ' kayıt · ' + (b.description || '') + '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:8px">' +
-          '<button onclick="Admin.editLeaderboard(\'' + b.id + '\')" style="border:1px solid ' + color + '50;color:' + color + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer">DÜZENLE</button>' +
-          '<button onclick="Admin.deleteLeaderboard(\'' + b.id + '\')" style="border:1px solid #ff2a2a50;color:#ff2a2a;background:transparent;padding:4px 10px;font-family:monospace;font-size:10px;cursor:pointer">SİL</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-   },
-   saveLeaderboard(e) {
-    if(e) e.preventDefault();
-    var name = document.getElementById('lb-name')?.value?.trim();
-    var color = document.getElementById('lb-color')?.value || '#00a2ff';
-    var desc  = document.getElementById('lb-desc')?.value?.trim() || '';
-    if(!name) return;
-    var id = document.getElementById('lb-id')?.value;
-    if(!DB.leaderboards) DB.leaderboards = [];
-    if(id) {
-      var board = DB.leaderboards.find(function(b){ return b.id === id; });
-      if(board) { board.name = name; board.color = color; board.description = desc; }
-    } else {
-      DB.leaderboards.push({ id: 'lb_' + Date.now(), name: name, color: color, description: desc, entries: [] });
-    }
-    Storage.save(DB);
-    SupaSync.save(DB, window.currentOperator);
-    this.loadLeaderboards();
-    this.clearLeaderboardForm();
-    UI.renderLeaderboards();
-   },
+
    editLeaderboard(id) {
     var board = (DB.leaderboards || []).find(function(b){ return b.id === id; });
     if(!board) return;

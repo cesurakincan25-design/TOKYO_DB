@@ -4243,99 +4243,26 @@ var Admin = {
     }catch(e){}
    },
 
-   // ── LEADERBOARD ADMIN ────────────────────────────────
-
-   editLeaderboard(id) {
-    var board = (DB.leaderboards || []).find(function(b){ return b.id === id; });
-    if(!board) return;
-    if(document.getElementById('lb-id'))    document.getElementById('lb-id').value    = board.id;
-    if(document.getElementById('lb-name'))  document.getElementById('lb-name').value  = board.name;
-    if(document.getElementById('lb-color')) document.getElementById('lb-color').value = board.color || '#00a2ff';
-    if(document.getElementById('lb-desc'))  document.getElementById('lb-desc').value  = board.description || '';
-    // Entries listesini göster
-    this.loadLeaderboardEntries(board);
-   },
-   deleteLeaderboard(id) {
-    if(!confirm('Bu leaderboard\'u silmek istiyor musun?')) return;
-    DB.leaderboards = (DB.leaderboards || []).filter(function(b){ return b.id !== id; });
-    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
-    this.loadLeaderboards(); UI.renderLeaderboards();
-   },
-   clearLeaderboardForm() {
-    ['lb-id','lb-name','lb-desc'].forEach(function(id){ var el = document.getElementById(id); if(el) el.value = ''; });
-    var el = document.getElementById('lb-entries'); if(el) el.innerHTML = '';
-   },
-   loadLeaderboardEntries(board) {
-    var cont = document.getElementById('lb-entries');
-    if(!cont) return;
-    var entries = board.entries || [];
-    cont.innerHTML = '<div style="margin-top:12px">' +
-      '<div style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.15em;margin-bottom:8px">KAYITLAR</div>' +
-      entries.map(function(e, i) {
-        var bid = board.id;
-        return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">' +
-          '<span style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3);width:20px">' + (i+1) + '.</span>' +
-          '<input value="' + (e.name||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'name\',this.value)" style="flex:2;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="İsim">' +
-          '<input value="' + (e.subtitle||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'subtitle\',this.value)" style="flex:2;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="Alt başlık">' +
-          '<input value="' + (e.score||'') + '" onchange="Admin._updateEntry(\'' + bid + '\',' + i + ',\'score\',this.value)" style="width:80px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:white;font-family:monospace;font-size:11px;padding:3px 6px" placeholder="Skor">' +
-          '<button onclick="Admin._moveEntry(\'' + bid + '\',' + i + ',-1)" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 7px;cursor:pointer;font-size:10px">↑</button>' +
-          '<button onclick="Admin._moveEntry(\'' + bid + '\',' + i + ',1)" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 7px;cursor:pointer;font-size:10px">↓</button>' +
-          '<button onclick="Admin._removeEntry(\'' + bid + '\',' + i + ')" style="background:transparent;border:1px solid #ff2a2a50;color:#ff2a2a;padding:3px 7px;cursor:pointer;font-size:10px">✕</button>' +
-        '</div>';
-      }).join('') +
-      '<button onclick="Admin._addEntry(\'' + board.id + '\')" style="margin-top:8px;border:1px solid rgba(0,162,255,.3);color:#00a2ff;background:transparent;padding:5px 16px;font-family:monospace;font-size:10px;cursor:pointer;width:100%">+ KAYIT EKLE</button>' +
-    '</div>';
-   },
-   _updateEntry(boardId, idx, field, value) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
-    if(!board || !board.entries[idx]) return;
-    board.entries[idx][field] = value;
-    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
-    UI.renderLeaderboards();
-   },
-   _addEntry(boardId) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
-    if(!board) return;
-    if(!board.entries) board.entries = [];
-    board.entries.push({ name: 'Yeni Kayıt', subtitle: '', score: '' });
-    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
-    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
-   },
-   _removeEntry(boardId, idx) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
-    if(!board) return;
-    board.entries.splice(idx, 1);
-    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
-    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
-   },
-   _moveEntry(boardId, idx, dir) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
-    if(!board) return;
-    var newIdx = idx + dir;
-    if(newIdx < 0 || newIdx >= board.entries.length) return;
-    var tmp = board.entries[idx]; board.entries[idx] = board.entries[newIdx]; board.entries[newIdx] = tmp;
-    Storage.save(DB); SupaSync.save(DB, window.currentOperator);
-    this.loadLeaderboardEntries(board); UI.renderLeaderboards();
-   },
-
    // ── LEADERBOARD YÖNETİMİ ──
    loadLeaderboards() {
     var list = document.getElementById('admin-leaderboard-list');
     if(!list) return;
     var boards = DB.leaderboards || [];
     if(boards.length === 0) {
-      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-6">Henüz leaderboard yok.</div>';
+      list.innerHTML = '<div class="font-mono text-xs text-gray-600 text-center py-8"><i class="fas fa-trophy opacity-20 text-2xl block mb-2"></i>Henüz leaderboard yok.</div>';
+      var editor = document.getElementById('admin-leaderboard-editor');
+      if(editor) { editor.innerHTML = ''; editor.classList.add('hidden'); }
       return;
     }
     list.innerHTML = boards.map(function(b) {
       var color = b.color || '#00a2ff';
-      return '<div class="flex items-center justify-between p-3 border font-mono text-xs" style="border-color:' + color + '40;background:rgba(0,0,0,.4)">' +
+      return '<div class="flex items-center justify-between p-3 border font-mono text-xs mb-1" style="border-color:' + color + '40;background:rgba(0,0,0,.4)">' +
         '<div>' +
           '<div style="color:' + color + ';font-weight:bold"><i class="fas fa-trophy mr-2"></i>' + (b.name||'?') + '</div>' +
-          '<div style="color:rgba(255,255,255,.4);margin-top:2px">' + (b.entries||[]).length + ' kayıt</div>' +
+          '<div style="color:rgba(255,255,255,.35);margin-top:2px">' + (b.entries||[]).length + ' kayıt' + (b.description ? ' · ' + b.description : '') + '</div>' +
         '</div>' +
-        '<div style="display:flex;gap:8px">' +
-          '<button onclick="Admin.editLeaderboard(\'' + b.id + '\')" style="border:1px solid ' + color + '50;color:' + color + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer">DÜZENLE</button>' +
+        '<div style="display:flex;gap:6px">' +
+          '<button onclick="Admin.editLeaderboard(\'' + b.id + '\')" style="border:1px solid ' + color + '50;color:' + color + ';background:transparent;padding:4px 12px;font-family:monospace;font-size:10px;cursor:pointer;letter-spacing:.05em">DÜZENLE</button>' +
           '<button onclick="Admin.deleteLeaderboard(\'' + b.id + '\')" style="border:1px solid #ff2a2a50;color:#ff2a2a;background:transparent;padding:4px 10px;font-family:monospace;font-size:10px;cursor:pointer">SİL</button>' +
         '</div>' +
       '</div>';
@@ -4343,44 +4270,83 @@ var Admin = {
    },
 
    createLeaderboard() {
-    var id = 'lb_' + Date.now();
     if(!DB.leaderboards) DB.leaderboards = [];
+    var id = 'lb_' + Date.now();
     DB.leaderboards.push({ id: id, name: 'Yeni Leaderboard', color: '#00a2ff', description: '', entries: [] });
     Storage.save(DB);
     SupaSync.save(DB, window.currentOperator);
     this.loadLeaderboards();
     this.editLeaderboard(id);
+    try { UI.renderLeaderboards(); } catch(e) {}
+   },
+
+   editLeaderboard(id) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === id; });
+    if(!board) return;
+    var editor = document.getElementById('admin-leaderboard-editor');
+    if(!editor) return;
+    editor.classList.remove('hidden');
+    var color = board.color || '#00a2ff';
+
+    function row(e, i, bid) {
+      return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+        '<span style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.3);width:22px;text-align:center">' + (i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.') + '</span>' +
+        '<input value="' + (e.name||'') + '" onchange="Admin._lbUpdateEntry(\'' + bid + '\',' + i + ',\'name\',this.value)" style="flex:2;min-width:0;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:white;font-family:monospace;font-size:11px;padding:4px 7px" placeholder="İsim / Kayıt">' +
+        '<input value="' + (e.subtitle||'') + '" onchange="Admin._lbUpdateEntry(\'' + bid + '\',' + i + ',\'subtitle\',this.value)" style="flex:2;min-width:0;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:white;font-family:monospace;font-size:11px;padding:4px 7px" placeholder="Alt başlık">' +
+        '<input value="' + (e.score||'') + '" onchange="Admin._lbUpdateEntry(\'' + bid + '\',' + i + ',\'score\',this.value)" style="width:80px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:white;font-family:monospace;font-size:11px;padding:4px 7px" placeholder="Skor">' +
+        '<button onclick="Admin._lbMove(\'' + bid + '\',' + i + ',-1)" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);padding:3px 8px;cursor:pointer;font-size:12px" title="Yukarı">↑</button>' +
+        '<button onclick="Admin._lbMove(\'' + bid + '\',' + i + ',1)" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);padding:3px 8px;cursor:pointer;font-size:12px" title="Aşağı">↓</button>' +
+        '<button onclick="Admin._lbRemove(\'' + bid + '\',' + i + ')" style="background:transparent;border:1px solid #ff2a2a50;color:#ff2a2a;padding:3px 8px;cursor:pointer;font-size:12px" title="Sil">✕</button>' +
+      '</div>';
+    }
+
+    editor.innerHTML =
+      '<div class="glass-panel p-5 border mt-4" style="border-color:' + color + '30">' +
+        '<div class="font-mono text-[10px] text-gray-500 tracking-widest mb-4 pb-2 border-b border-gray-800">▸ LEADERBOARD DÜZENLE: ' + (board.name||'') + '</div>' +
+        '<div class="grid grid-cols-1 gap-3 mb-5" style="grid-template-columns:1fr 1fr auto">' +
+          '<div><label style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.1em;display:block;margin-bottom:4px">BAŞLIK</label>' +
+            '<input id="lbe-name-' + id + '" value="' + (board.name||'') + '" oninput="Admin._lbMeta(\'' + id + '\')" style="width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:white;font-family:monospace;font-size:12px;padding:6px 10px"></div>' +
+          '<div><label style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.1em;display:block;margin-bottom:4px">AÇIKLAMA</label>' +
+            '<input id="lbe-desc-' + id + '" value="' + (board.description||'') + '" oninput="Admin._lbMeta(\'' + id + '\')" style="width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:white;font-family:monospace;font-size:12px;padding:6px 10px"></div>' +
+          '<div><label style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.1em;display:block;margin-bottom:4px">RENK</label>' +
+            '<input type="color" id="lbe-color-' + id + '" value="' + color + '" oninput="Admin._lbMeta(\'' + id + '\')" style="width:56px;height:36px;border:1px solid rgba(255,255,255,.15);background:transparent;cursor:pointer;padding:2px"></div>' +
+        '</div>' +
+        '<div style="font-family:monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.1em;margin-bottom:8px">KAYITLAR</div>' +
+        '<div id="lbe-rows-' + id + '">' +
+          (board.entries||[]).map(function(e, i){ return row(e, i, board.id); }).join('') +
+        '</div>' +
+        '<button onclick="Admin._lbAddEntry(\'' + id + '\')" style="margin-top:10px;width:100%;border:1px dashed rgba(255,255,255,.2);color:rgba(255,255,255,.4);background:transparent;padding:8px;font-family:monospace;font-size:11px;cursor:pointer;letter-spacing:.1em">+ KAYIT EKLE</button>' +
+      '</div>';
    },
 
    deleteLeaderboard(id) {
-    if(!confirm('Bu leaderboard\u0027u silmek istiyor musun?')) return;
-    DB.leaderboards = (DB.leaderboards||[]).filter(function(b){return b.id!==id;});
+    if(!confirm('Bu leaderboard\'u silmek istiyor musun?')) return;
+    DB.leaderboards = (DB.leaderboards||[]).filter(function(b){ return b.id !== id; });
     Storage.save(DB);
     SupaSync.save(DB, window.currentOperator);
     this.loadLeaderboards();
     var editor = document.getElementById('admin-leaderboard-editor');
-    if(editor) { editor.innerHTML=''; editor.classList.add('hidden'); }
+    if(editor) { editor.innerHTML = ''; editor.classList.add('hidden'); }
     try { UI.renderLeaderboards(); } catch(e) {}
    },
 
-
-   _saveLbMeta(id) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===id;});
+   _lbMeta(id) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === id; });
     if(!board) return;
-    var nameEl  = document.getElementById('lb-name-'  + id);
-    var descEl  = document.getElementById('lb-desc-'  + id);
-    var colorEl = document.getElementById('lb-color-' + id);
-    if(nameEl)  board.name        = nameEl.value;
-    if(descEl)  board.description = descEl.value;
-    if(colorEl) board.color       = colorEl.value;
+    var n = document.getElementById('lbe-name-'+id);
+    var d = document.getElementById('lbe-desc-'+id);
+    var c = document.getElementById('lbe-color-'+id);
+    if(n) board.name = n.value;
+    if(d) board.description = d.value;
+    if(c) board.color = c.value;
     Storage.save(DB);
     SupaSync.save(DB, window.currentOperator);
     this.loadLeaderboards();
     try { UI.renderLeaderboards(); } catch(e) {}
    },
 
-   _addEntry(boardId) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+   _lbAddEntry(boardId) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === boardId; });
     if(!board) return;
     if(!board.entries) board.entries = [];
     board.entries.push({ name: '', subtitle: '', score: '' });
@@ -4390,8 +4356,8 @@ var Admin = {
     try { UI.renderLeaderboards(); } catch(e) {}
    },
 
-   _removeEntry(boardId, idx) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+   _lbRemove(boardId, idx) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === boardId; });
     if(!board) return;
     board.entries.splice(idx, 1);
     Storage.save(DB);
@@ -4400,28 +4366,29 @@ var Admin = {
     try { UI.renderLeaderboards(); } catch(e) {}
    },
 
-   _moveEntry(boardId, idx, dir) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+   _lbMove(boardId, idx, dir) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === boardId; });
     if(!board) return;
-    var newIdx = idx + dir;
-    if(newIdx < 0 || newIdx >= board.entries.length) return;
+    var ni = idx + dir;
+    if(ni < 0 || ni >= board.entries.length) return;
     var tmp = board.entries[idx];
-    board.entries[idx] = board.entries[newIdx];
-    board.entries[newIdx] = tmp;
+    board.entries[idx] = board.entries[ni];
+    board.entries[ni] = tmp;
     Storage.save(DB);
     SupaSync.save(DB, window.currentOperator);
     this.editLeaderboard(boardId);
     try { UI.renderLeaderboards(); } catch(e) {}
    },
 
-   _updateEntry(boardId, idx, field, value) {
-    var board = (DB.leaderboards||[]).find(function(b){return b.id===boardId;});
+   _lbUpdateEntry(boardId, idx, field, value) {
+    var board = (DB.leaderboards||[]).find(function(b){ return b.id === boardId; });
     if(!board || !board.entries[idx]) return;
     board.entries[idx][field] = value;
     Storage.save(DB);
     SupaSync.save(DB, window.currentOperator);
     try { UI.renderLeaderboards(); } catch(e) {}
    },
+
 
    async loadBackups() {
     const list = document.getElementById('backup-list');
@@ -4929,12 +4896,41 @@ var Admin = {
   
 
   window.addEventListener('DOMContentLoaded', () => {
-   // init-screen: click, touch ve 10 saniye otomatik geçiş
+   // ── 6 SAATLIK INTRO BYPASS ──────────────────────────────────────────
+   // Aynı cihaz/tarayıcı son 6 saat içinde girdiyse intro'yu atla
    (function() {
+    var BOOT_TS_KEY = (CFG.storageKey || 'rp_db') + '_boot_ts';
+    var SIX_HOURS = 6 * 60 * 60 * 1000;
+
+    function saveBootTime() {
+     try { localStorage.setItem(BOOT_TS_KEY, Date.now().toString()); } catch(e) {}
+    }
+
+    function shouldSkipIntro() {
+     try {
+      var ts = localStorage.getItem(BOOT_TS_KEY);
+      if(!ts) return false;
+      return (Date.now() - parseInt(ts, 10)) < SIX_HOURS;
+     } catch(e) { return false; }
+    }
+
+    // Eğer son 6 saat içinde girdiyse: init-screen ve login-modal'ı gizle, direkt initApp
+    if(shouldSkipIntro()) {
+     var initScr = document.getElementById('init-screen');
+     if(initScr) { initScr.style.display = 'none'; }
+     var loginModal = document.getElementById('login-modal');
+     if(loginModal) { loginModal.style.display = 'none'; }
+     // Player bilgisi localStorage'dan zaten okunmuş olacak
+     try { UI.initApp(); } catch(e) { console.error('initApp error', e); }
+     return; // DOMContentLoaded handler bitti
+    }
+
+    // ── Normal boot akışı ────────────────────────────────────────────
     var booted = false;
     function startBoot() {
      if(booted) return;
      booted = true;
+     saveBootTime(); // timestamp kaydet
      try { UI.bootSequence(); } catch(e) { try { UI.initApp(); } catch(e2) {} }
     }
     var scr = document.getElementById('init-screen');

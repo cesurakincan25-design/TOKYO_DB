@@ -4916,10 +4916,16 @@ var Admin = {
 
     // Eğer son 6 saat içinde girdiyse: init-screen ve login-modal'ı gizle, direkt initApp
     if(shouldSkipIntro()) {
+     // init-screen ve login-modal gizle
      var initScr = document.getElementById('init-screen');
      if(initScr) { initScr.style.display = 'none'; }
      var loginModal = document.getElementById('login-modal');
      if(loginModal) { loginModal.style.display = 'none'; }
+     // boot-screen ve brightness overlay'i temizle (boot animasyonu olmadan geçince bunlar açık kalır)
+     var bootScr = document.getElementById('boot-screen');
+     if(bootScr) { bootScr.classList.add('hidden'); bootScr.style.display = 'none'; }
+     var appWrap = document.getElementById('app-wrapper');
+     if(appWrap) { appWrap.style.filter = 'brightness(1)'; }
      // Player bilgisi localStorage'dan zaten okunmuş olacak
      try { UI.initApp(); } catch(e) { console.error('initApp error', e); }
      return; // DOMContentLoaded handler bitti
